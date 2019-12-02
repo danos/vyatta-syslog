@@ -1,0 +1,14 @@
+{
+  "system":{
+    "syslog":{
+      "console":{
+        "facility":[
+          {
+            "tagnode":"news",
+            "level":"info"
+          }
+        ]
+      }
+    }
+  }
+}

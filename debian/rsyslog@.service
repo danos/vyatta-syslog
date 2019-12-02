@@ -1,0 +1,15 @@
+[Unit]
+Description=System Logging Service
+Requires=syslog.socket
+Documentation=man:rsyslogd(8)
+Documentation=http://www.rsyslog.com/doc/
+
+[Service]
+EnvironmentFile=/run/rsyslog/vrf/%i/rsyslog.env
+Type=notify
+ExecStart=/usr/sbin/chvrf %i /usr/sbin/rsyslogd -n $RSYSLOG_CONF_FILE $RSYSLOG_PID_FILE
+StandardOutput=null
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

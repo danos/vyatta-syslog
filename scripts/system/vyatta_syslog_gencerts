@@ -1,0 +1,179 @@
+#!/bin/bash
+# Copyright (c) 2019, AT&T Intellectual Property.
+# All rights reserved.
+#
+# SPDX-License-Identifier: GPL-2.0-only
+#
+
+DAYS=365
+DATE=$( date +%s )
+
+# Root CA parameters
+#
+CA_SUBJECT="/C=US/ST=CA/L=Palo Alto/O=AT&T/OU=Labs/CN=Vyatta R&D TEST CA $DATE/emailAddress=DL-vyatta-help@att.com"a
+CA_FILENAME=Vyatta_Root_CA_rsyslog
+
+# Host CA (second cert in Chain) parameters
+#
+HOST_FILENAME=Vyatta_CA_rsyslog
+CN=hostA
+HOST_SUBJECT="/C=US/ST=CA/L=Palo Alto/O=AT&T/OU=Labs/CN=$CN/emailAddress=$CN+rsa@vyatta.att-mail.com"
+
+# Cert Req parameters
+# 
+SHA_SIGNED="-SHA256"
+
+function fail_exit () {
+	if [[ ${1} ]];
+	then
+		echo "ERROR: ${1}"
+	fi
+
+	rm -f *.csr *.pem *.key *.srl *.der *.key1 san.cnf index* crlnumber sample* serial*
+	popd &>/dev/null
+	rmdir $tmp_dir
+
+	exit 1
+}
+
+function check_for_CN () {
+	subject=${1}
+	regex="CN=([A-Za-z0-9[:punct:]]+)"
+
+	if [[ "$subject" =~ $regex ]];
+	then
+		CN="${BASH_REMATCH[1]}"
+		HOST_SUBJECT=$subject
+		return 0
+	fi
+
+	return 1
+}
+
+while [[ $# -gt 0 ]]; do
+	arg=${1}
+	case $arg in
+	subject-string)
+		check_for_CN "${2}"
+		if [[ $? -eq 1 ]];
+		then
+			fail_exit "Error: Malformed subject string"
+		fi
+		HOST_SUBJECT=${2}
+		shift
+		shift
+		;;
+	ocsp-uri)
+		OCSP=${2}
+		shift
+		shift
+		;;
+	filename)
+		HOST_FILENAME=${2}
+		shift
+		shift
+		;;
+	esac
+done
+
+export tmp_dir=$(mktemp -q -d -t gencerts-XXXXX)
+pushd $tmp_dir &>/dev/null
+
+# sample.cnf:
+touch index.txt
+touch index.txt.attr
+echo 00 > serial
+echo 00 > crlnumber
+cp /etc/ssl/openssl.cnf sample.cnf
+sed -i 's/demoCA//g' sample.cnf
+sed -i 's/newcerts//g' sample.cnf
+sed -i 's/countryName\t\t= match/countryName\t\t= optional/g' sample.cnf
+sed -i 's/stateOrProvinceName\t= match/stateOrProvinceName\t\t= optional/g' sample.cnf
+sed -i 's/organizationName\t= match/organizationName\t\t= optional/g' sample.cnf
+
+if [[ $SAN ]];
+then
+	echo "[SAN]" >> sample.cnf
+	echo 'subjectAltName=$(SAN)' >> sample.cnf
+	echo '' >> sample.cnf
+fi
+
+if [[ $OCSP ]];
+then
+	echo "[v3_OCSP]" >> sample.cnf
+	echo "basicConstraints = CA:FALSE" >> sample.cnf
+	echo "keyUsage = nonRepudiation, digitalSignature, keyEncipherment" >> sample.cnf
+	echo "extendedKeyUsage = OCSPSigning" >> sample.cnf
+fi
+
+echo "[ usr_cert ]" >> sample.cnf
+echo "basicConstraints=CA:FALSE" >> sample.cnf
+echo "nsComment = \"vyatta-security-vpn doc sample\"" >> sample.cnf
+echo "subjectKeyIdentifier=hash" >> sample.cnf
+echo "authorityKeyIdentifier=keyid,issuer" >> sample.cnf
+
+if [[ $OCSP ]];
+then
+	echo "authorityInfoAccess = OCSP;URI:$OCSP" >> sample.cnf
+fi
+
+openssl genrsa -out $CA_FILENAME.key 2048 
+if [[ $? != 0 ]];
+then
+	fail_exit
+fi
+
+openssl req "$SHA_SIGNED" -nodes -subj "$CA_SUBJECT" -new -key $CA_FILENAME.key \
+	-x509 -days "$DAYS" -out $CA_FILENAME.pem
+if [[ $? != 0 ]];
+then
+	fail_exit
+fi
+
+# the reason for *.key1 creation is to be close to: vyatta-gen-x509-keypair.sh
+openssl req -new -nodes -keyout "$HOST_FILENAME.$CN.key1" -out "$HOST_FILENAME.$CN.csr" $SAN_REQEXTS \
+	-config sample.cnf -subj "$HOST_SUBJECT"
+if [[ $? != 0 ]];
+then
+	fail_exit
+fi
+
+openssl rsa -in "$HOST_FILENAME.$CN.key1"  -out "$HOST_FILENAME.$CN.key"
+if [[ $? != 0 ]];
+then
+	fail_exit
+fi
+rm -f $HOST_FILENAME.$CN.key1
+
+openssl ca -batch -config sample.cnf -days $DAYS -in $HOST_FILENAME.$CN.csr -cert $CA_FILENAME.pem \
+	-keyfile $CA_FILENAME.key -out $HOST_FILENAME.$CN.pem -extfile sample.cnf \
+	-extensions usr_cert $SAN_EXT
+if [[ $? != 0 ]];
+then
+	fail_exit
+fi
+
+openssl x509 -outform der -in $HOST_FILENAME.$CN.pem -out $HOST_FILENAME.$CN.der
+if [[ $? != 0 ]];
+then
+	fail_exit
+fi
+
+if [[ -e /config/auth/$HOST_FILENAME.$CN.pem ]] || [[ -e /config/auth/$HOST_FILENAME.$CN.key ]];
+then
+	fail_exit "A x509 cert with name $HOST_FILENAME.$CN already exists"
+fi
+if [[ -e /config/auth/$CA_FILENAME.pem ]] || [[ -e /config/auth/$CA_FILENAME.key ]];
+then
+	fail_exit "A x509 root CA cert with name $CA_FILENAME already exists"
+fi
+
+cp ${CA_FILENAME}.pem ${CA_FILENAME}.key /config/auth/
+cp ${HOST_FILENAME}.$CN.pem ${HOST_FILENAME}.$CN.key /config/auth/
+
+#clean:
+rm -f *.csr *.pem *.key *.srl *.der *.key1 san.cnf index* crlnumber sample* serial*
+
+popd &>/dev/null
+rmdir $tmp_dir
+exit $?

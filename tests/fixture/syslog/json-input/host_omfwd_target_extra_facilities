@@ -1,0 +1,33 @@
+{
+  "system":{
+    "syslog":{
+      "host":[
+        {
+          "tagnode":"100.0.0.200",
+          "facility":[
+            {
+              "tagnode":"all",
+              "level":"err"
+            },
+            {
+              "tagnode":"dataplane",
+              "level":"debug"
+            },
+            {
+              "tagnode":"mark",
+              "level":"info"
+            },
+            {
+              "tagnode":"security",
+              "level":"warning"
+            },
+            {
+              "tagnode":"user",
+              "level":"warning"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

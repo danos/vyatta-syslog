@@ -1,0 +1,1 @@
+/etc/logrotate.conf.vyatta perl -0pe 's|(/var/log/wtmp \{\n.*create )0664( root utmp\n[^}]+\n\})|${1}0660${2}|s'

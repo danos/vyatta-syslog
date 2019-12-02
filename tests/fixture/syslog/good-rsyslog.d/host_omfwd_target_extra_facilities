@@ -1,0 +1,1 @@
+*.err;local6.debug;mark.info;security.warning;user.warning action( Type="omfwd" Target="100.0.0.200" Protocol="udp" Port="514" Template="SystemdUnitTemplate" )

@@ -1,0 +1,30 @@
+{
+  "routing": {
+    "routing-instance": [
+      {
+        "instance-name": "blue",
+        "instance-type": "vrf",
+        "interface": [
+          {
+            "name": "dp0s4"
+          }
+        ],
+        "system": {
+          "syslog": {
+            "host": [
+              {
+                "tagnode": "100.0.0.255",
+                "facility": [
+                  {
+                    "tagnode": "all",
+                    "level": "err"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

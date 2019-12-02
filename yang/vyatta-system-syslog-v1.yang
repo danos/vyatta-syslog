@@ -1,0 +1,697 @@
+module vyatta-system-syslog-v1 {
+	namespace "urn:vyatta.com:mgmt:vyatta-system-syslog:1";
+	prefix vyatta-system-syslog-v1;
+
+	import vyatta-types-v1 {
+		prefix types;
+	}
+	import vyatta-system-v1 {
+		prefix system;
+	}
+	import configd-v1 {
+		prefix configd;
+	}
+	import vyatta-interfaces-v1 {
+		prefix if;
+	}
+
+	organization "AT&T Inc.";
+	contact
+		"AT&T
+		 Postal: 208 S. Akard Street
+		         Dallas, TX 75202
+		 Web: www.att.com";
+
+	description
+		"Copyright (c) 2018-2019 AT&T Intellectual Property
+		 All rights reserved.
+
+		 Copyright (c) 2014-2016 by Brocade Communications Systems, Inc.
+		 All rights reserved.
+
+		 Redistribution and use in source and binary forms, with or without
+		 modification, are permitted provided that the following conditions
+		 are met:
+
+		 1. Redistributions of source code must retain the above copyright
+		    notice, this list of conditions and the following disclaimer.
+		 2. Redistributions in binary form must reproduce the above
+		    copyright notice, this list of conditions and the following
+		    disclaimer in the documentation and/or other materials provided
+		    with the distribution.
+		 3. Neither the name of the copyright holder nor the names of its
+		    contributors may be used to endorse or promote products derived
+		    from this software without specific prior written permission.
+
+		 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+		 'AS IS' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+		 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+		 FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+		 COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+		 INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+		 BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+		 LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+		 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+		 LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+		 ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+		 POSSIBILITY OF SUCH DAMAGE.
+
+		 SPDX-License-Identifier: BSD-3-Clause
+
+		 Syslog configuration";
+
+	revision 2019-12-11 {
+		description "Restrict source-interface to UDP";
+	}
+	revision 2019-11-15 {
+		description "Obsolete syslog global target.";
+	}
+	revision 2019-10-17 {
+		description "Limits TLS peers to one due to rsyslog omfwd module only supporting one peer.";
+	}
+	revision 2019-08-29 {
+		description "Adds TLS encryption grouping for remote logging";
+	}
+	revision 2019-05-15 {
+		description "Add discard action";
+	}
+
+	revision 2019-03-21 {
+		description "Add regex message selector";
+	}
+
+	revision 2018-12-18 {
+		description "Remove variable expansions from error messages.";
+	}
+
+	revision 2018-07-09 {
+		description "Remove config scripts on level leaf";
+	}
+
+	revision 2018-04-23 {
+		description "Add source-interface leaf";
+	}
+
+	revision 2016-11-16 {
+		description "Add help text where missing";
+	}
+
+	revision 2016-09-21 {
+		description "Add 'rate-limit' configuration commands";
+	}
+
+	revision 2016-08-15 {
+		description "Remove 'all' option from facility-override";
+	}
+
+	revision 2016-04-22 {
+		description "Reorganization for modularity";
+	}
+
+	revision 2015-08-14 {
+		description "Initial revision of version 1.";
+	}
+
+	typedef remote-host {
+		type union {
+			type types:hostname-port;
+			type types:ipv4-addr-port;
+			type types:ipv6-addr-port;
+		}
+	}
+
+	typedef facility {
+		type enumeration {
+			enum "auth" {
+				configd:help "Authentication and authorization";
+			}
+			enum "authpriv" {
+				configd:help "Non-system authorization";
+			}
+			enum "cron" {
+				configd:help "Cron daemon";
+			}
+			enum "dataplane" {
+				configd:help "Dataplane (local6)";
+			}
+			enum "daemon" {
+				configd:help "System daemons";
+			}
+			enum "kern" {
+				configd:help "Kernel";
+			}
+			enum "lpr" {
+				configd:help "Line printer spooler";
+			}
+			enum "mail" {
+				configd:help "Mail subsystem";
+			}
+			enum "mark" {
+				configd:help "Timestamp";
+			}
+			enum "news" {
+				configd:help "USENET subsystem";
+			}
+			enum "protocols" {
+				configd:help "Routing protocols (local7)";
+			}
+			enum "security" {
+				configd:help "Authentication and authorization";
+			}
+			enum "sensors" {
+				configd:help "Hardware sensors";
+			}
+			enum "syslog" {
+				configd:help "Authentication and authorization";
+			}
+			enum "user" {
+				configd:help "Application processes";
+			}
+			enum "uucp" {
+				configd:help "UUCP subsystem";
+			}
+			enum "local0" {
+				configd:help "Local facility 0";
+			}
+			enum "local1" {
+				configd:help "Local facility 1";
+			}
+			enum "local2" {
+				configd:help "Local facility 2";
+			}
+			enum "local3" {
+				configd:help "Local facility 3";
+			}
+			enum "local4" {
+				configd:help "Local facility 4";
+			}
+			enum "local5" {
+				configd:help "Local facility 5";
+			}
+			enum "local6" {
+				configd:help "Local facility 6";
+			}
+			enum "local7" {
+				configd:help "Local facility 7";
+			}
+			enum "all" {
+				configd:help "All facilities excluding \"mark\"";
+			}
+		}
+	}
+
+
+	typedef facility-no-all {
+		type enumeration {
+			enum "auth" {
+				configd:help "Authentication and authorization";
+			}
+			enum "authpriv" {
+				configd:help "Non-system authorization";
+			}
+			enum "cron" {
+				configd:help "Cron daemon";
+			}
+			enum "dataplane" {
+				configd:help "Dataplane (local6)";
+			}
+			enum "daemon" {
+				configd:help "System daemons";
+			}
+			enum "kern" {
+				configd:help "Kernel";
+			}
+			enum "lpr" {
+				configd:help "Line printer spooler";
+			}
+			enum "mail" {
+				configd:help "Mail subsystem";
+			}
+			enum "mark" {
+				configd:help "Timestamp";
+			}
+			enum "news" {
+				configd:help "USENET subsystem";
+			}
+			enum "protocols" {
+				configd:help "Routing protocols (local7)";
+			}
+			enum "security" {
+				configd:help "Authentication and authorization";
+			}
+			enum "sensors" {
+				configd:help "Hardware sensors";
+			}
+			enum "syslog" {
+				configd:help "Authentication and authorization";
+			}
+			enum "user" {
+				configd:help "Application processes";
+			}
+			enum "uucp" {
+				configd:help "UUCP subsystem";
+			}
+			enum "local0" {
+				configd:help "Local facility 0";
+			}
+			enum "local1" {
+				configd:help "Local facility 1";
+			}
+			enum "local2" {
+				configd:help "Local facility 2";
+			}
+			enum "local3" {
+				configd:help "Local facility 3";
+			}
+			enum "local4" {
+				configd:help "Local facility 4";
+			}
+			enum "local5" {
+				configd:help "Local facility 5";
+			}
+			enum "local6" {
+				configd:help "Local facility 6";
+			}
+			enum "local7" {
+				configd:help "Local facility 7";
+			}
+			enum "all" {
+				status obsolete;
+				configd:help "All facilities excluding \"mark\"";
+			}
+		}
+	}
+
+	typedef level {
+		type enumeration {
+			enum "emerg" {
+				configd:help "Emergency messages";
+			}
+			enum "alert" {
+				configd:help "Urgent messages";
+			}
+			enum "crit" {
+				configd:help "Critical messages ";
+			}
+			enum "err" {
+				configd:help "Error messages";
+			}
+			enum "warning" {
+				configd:help "Warning messages";
+			}
+			enum "notice" {
+				configd:help "Messages for further investigation";
+			}
+			enum "info" {
+				configd:help "Informational messages";
+			}
+			enum "debug" {
+				configd:help "Debug messages";
+			}
+		}
+	}
+
+	grouping facility {
+		list facility {
+			configd:help "Facility for system logging";
+			key "tagnode";
+			leaf tagnode {
+				type facility;
+				configd:help "Facility for system logging";
+				description "Specifies a log facility value.";
+			}
+			leaf level {
+				type level;
+				configd:help "Logging level";
+				default "err";
+				description "Specifies a log level value.";
+			}
+			description "List of facility and level values.";
+		}
+	}
+
+	grouping msg-regex {
+		container msg {
+			leaf-list regex {
+				type string {
+					configd:help "Extended Posix Regex to match syslog MSG";
+				}
+				description "Posix Extended Regular Expressions to match the syslog MSG";
+				configd:help "Regex to match syslog MSG";
+			}
+			description "A selector that matches syslog MSG";
+			configd:help "match syslog MSG part";
+		}
+	}
+
+	grouping archive {
+		container archive {
+			configd:help "Log file size and rotation characteristics";
+			leaf files {
+				type uint32 {
+					configd:help "Number of saved files";
+				}
+				configd:help "Number of saved files";
+				default "5";
+				description "Specifies the number of retained log files. The
+					     oldest log files are deleted if this number is
+					     exceeded.";
+			}
+			leaf size {
+				type uint32 {
+					configd:help "Size of log files (kbytes)";
+				}
+				configd:help "Size of log files (kbytes)";
+				default "250";
+				description "Specifies the maximum size of the log file. If
+					     this size is exceeded the current log file
+					     will be archived and a new log file created.";
+			}
+			description "Configures the maximum size and the maximum number of
+				     retained log files. When the maximum size is reached
+				     the current log file is archived and a new log file is
+				     created. If the maximum number of log files is exceeded
+				     by creating the new log file the oldest log file will
+				     be deleted."; 
+		}
+	}
+
+	grouping syslog-rate-limit {
+		container rate-limit {
+			description "Configures the maximum burst size (in number of log entries)
+				     allowed within the interval specified. Log entries will be 
+				     suppressed if the number of log entries exceeds the
+				     burst value within the specified interval.";
+			presence "Enable rate-limit";
+			configd:help "Enable log rate limiting";
+			leaf interval {
+				type types:time-interval-seconds;
+				configd:help "Interval in seconds";
+				default "5";
+				description "Specifies the rate limit interval in seconds. 
+					     If the number of log entries exceeds the burst
+					     value within this interval logging will be
+					     suppressed.";
+			}
+			leaf burst {
+				type uint32 {
+					configd:help "Number of log entries in interval";
+				}
+				configd:help "Number of log entries in interval";
+				default "200";
+				description "Specifies the maximum number of log entries
+					     allowed within the specified interval before
+					     logs are suppressed";
+			}
+		}
+	}
+
+	grouping facility-archive {
+		uses facility;
+		uses archive;
+	}
+
+	grouping syslog-base {
+		container syslog {
+			presence "Enable syslog";
+			configd:priority "400";
+			configd:help "System logging daemon";
+			configd:end "/opt/vyatta/share/tmplscripts/system/syslog/configd_end.sh";
+			description "Configures system logging destinations.";
+		}
+	}
+
+	grouping syslog-global {
+		container global {
+			status obsolete;
+			presence "Enable global";
+			configd:help "Logging to system standard location";
+			uses facility-archive;
+			uses msg-regex;
+			description "Configures system standard log file attributes including
+				     facility, level, regex filters, maximum number of log files, and
+				     the maximum size of the log file.";
+		}
+	}
+
+	grouping tls-cipher-suite {
+		list cipher-suite {
+			configd:help "Choose the TLS cipher suite to be used";
+			description "TLS cipher suite.";
+			min-elements 1;
+			key "cipher";
+			leaf cipher {
+				type enumeration {
+					enum "ECDHE-ECDSA-AES128-GCM-SHA256" {
+						configd:help "AES 128bit GCM using SHA256";
+						description "Advanced Encryption Standard
+						with 128bit key in Galois/Counter mode
+						(AES 128 GCM) using Secure Hash Algorithm
+						256 (SHA256).";
+					}
+					enum "ECDHE-ECDSA-AES256-GCM-SHA384" {
+						configd:help "AES 256bit GCM using SHA384";
+						description "Advanced Encryption Standard
+						with 256bit key in Galois/Counter mode
+						(AES 256 GCM) using Secure Hash Algorithm
+						384 (SHA384).";
+					}
+				}
+			}
+		}
+	}
+	grouping syslog-remote-tls {
+		container tls {
+			configd:help "Enable TLS encryption for remote logging";
+			description "Set TLS encryption parameters for remote logging.";
+			presence "A Syslog TLS configuration is enabled";
+			must "../protocol = 'tcp'" {
+				error-message "TCP required for TLS connections";
+			}
+ 			uses tls-cipher-suite;
+			list certificate-authority {
+				configd:help "Name of Certificate Authority. Must be located in /config/auth";
+				description "Name of Certificate Authority.";
+				max-elements 1;
+				key "CA";
+				leaf CA {
+					type string;
+				}
+				leaf file {
+					configd:help "Path to CA file";
+					description "Path to CA file. Must be located in /config/auth.";
+					type string {
+						length 1..max;
+					}
+					mandatory true;
+				}
+			}
+			container local-certificate {
+				configd:help "Local certificate parameters";
+				description "Local certificate location and parameters.";
+				leaf certificate {
+					configd:help "Path to local Certificate file. Must be located in /config/auth";
+					description "Path to local Certificate file. Must be located in /config/auth.";
+					type string {
+						length 1..max;
+					}
+					mandatory true;
+				}
+				leaf key {
+					configd:help "Path to local Certificate key file. Must be located in /config/auth";
+					description "Path to local Certificate key file. Must be located in /config/auth.";
+					type string {
+						length 1..max;
+					}
+					mandatory true;
+				}
+			}
+			container authentication {
+				configd:help "Authentication parameters needed for TLS";
+				description "Authentication parameters needed for TLS";
+				leaf mode {
+					configd:help "x509 authentication mode";
+					description "Choose the x509 authentication mode";
+					type enumeration {
+						enum "x509/fingerprint" {
+							configd:help "Certificate fingerprint authentication";
+							description "In x509/fingerprint mode, both the
+								     client and server certificate must be signed
+								     by the same root CA.";
+						}
+						enum "x509/name" {
+							configd:help "Certificate validation and subject name authentication";
+							description "Certificate validation and subject name authentication.";
+						}
+					}
+					mandatory true;
+				}
+				list peers {
+					configd:help "Peer related parameters";
+					description "Peer related parameters.";
+					max-elements 1;
+					key "peer";
+					leaf peer {
+						configd:help "Hostname of peer";
+						description "Hostname of peer.";
+						type string {
+							length 1..max;
+						}
+					}
+					leaf fingerprint {
+						configd:help "Accepted fingerprint (SHA1)";
+						description "Accepted fingerprint (SHA1).";
+						type string {
+							pattern 'SHA1(:[0-9a-fA-F][0-9a-fA-F]){20}';
+							length 1..max;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	grouping syslog-remote {
+		list host {
+			configd:help "Logging to a remote host";
+			must "facility/* or msg/regex" {
+				error-message "At least one facility or message regex must be configured";
+			}
+			key "tagnode";
+			leaf tagnode {
+				type remote-host;
+			}
+			uses facility;
+			uses msg-regex;
+			leaf protocol {
+				configd:help "Transport protocol";
+				description "Transport protocol";
+				type enumeration {
+					enum "udp" {
+						configd:help "User Datagram Protocol (UDP)";
+						description "User Datagram Protocol (UDP)";
+					}
+					enum "tcp" {
+						configd:help "Transmission Control Protocol (TCP)";
+						description "Transmission Control Protocol (TCP)";
+					}
+				}
+			}
+			uses syslog-remote-tls;
+			leaf facility-override {
+				description "Override replaces facility field in all logs to host.";
+				type facility-no-all;
+				configd:help "Override replaces log entry facility field";
+			}
+			description "Configures a remote host as the destination for log entries.
+				     Log entries that match the specified facility and level,
+					 or regular expressions,
+				     will be sent to the remote host.";
+		}
+		uses if:source-interface-leaf {
+			refine source-interface {
+				must "not(../host/protocol) or (../host/protocol = 'udp')" {
+					error-message "Source-interface is only supported over UDP.";
+				}
+				description
+					"The interface used to obtain the source IP address for
+					 packets sent to the remote host.
+
+					 If the interface has multiple IP addresses one will be
+					 chosen by the system.
+
+					 If the interface has no suitable IP addresses then the
+					 system will not connect to the remote host.";
+				configd:help "Source interface for connecting to remote hosts";
+			}
+		}
+	}
+
+	grouping syslog-local {
+		list file {
+			configd:help "Logging to a file";
+			must "facility/* or msg/regex" {
+				error-message "At least one facility or message regex must be configured";
+			}
+			key "tagnode";
+			leaf tagnode {
+				type string {
+					pattern '[-a-zA-Z0-9_.]+';
+				}
+				configd:help "Logging to a file";
+				description "Name of the file to be used as a logging destination.";
+			}
+			uses facility-archive;
+			uses msg-regex;
+			description "Configures a file as the destination for logging entries.
+				     The file is created in /var/log/user. Log entries that match
+				     the specified facility and level, or regular expressions, will be saved to the file.";
+		}
+		list user {
+			configd:help "Logging to specific user's terminal";
+			must "facility/* or msg/regex" {
+				error-message "At least one facility or message regex must be configured";
+			}
+			key "tagnode";
+			leaf tagnode {
+				type string {
+					pattern '[a-zA-Z_][a-zA-Z0-9_-]*';
+				}
+				configd:help "Logging to specific user's terminal";
+				description "Logging will be sent to the user's terminal indicated
+					     by this username.";
+			}
+			uses facility;
+			uses msg-regex;
+			description "Configures a logged in users terminal as a destination for
+				     logging entries. Log entries that match the specified facility
+				     and level or regular expressions will be sent to users terminal.";
+
+		}
+		container console {
+			presence "Enable console";
+			configd:help "Logging to system console";
+			must "facility/* or msg/regex" {
+				error-message "At least one facility or message regex must be configured";
+			}
+			uses facility;
+			uses msg-regex;
+			description "Configures the system console as a destination for logging entries.
+				     Log entries that match the specified facility and level, or regular expressions,
+				     will be sent to the system console.";
+
+		}
+
+	}
+
+	grouping syslog-discard {
+		container discard {
+			uses msg-regex;
+			description "Configure syslog to immediately discard selected messages. These messages will
+			             not be seen by any configured global, local, remote or console target";
+			configd:help "Syslog messages to discard";
+		}
+	}
+
+	augment /system:system {
+		uses syslog-base;
+	}
+
+	augment /system:system/syslog {
+		uses syslog-discard;
+		uses syslog-global;
+		uses syslog-remote {
+			refine source-interface {
+				must "not(/*[local-name(.) = 'routing']" +
+					"/*[local-name(.) = 'routing-instance']" +
+					"/*[local-name(.) = 'interface']" +
+					"/*[local-name(.) = 'name'][. = current()])" {
+					error-message "Interface must not be configured in a routing instance";
+				}
+			}
+		}
+		uses syslog-local;
+		uses syslog-rate-limit;
+	}
+
+}

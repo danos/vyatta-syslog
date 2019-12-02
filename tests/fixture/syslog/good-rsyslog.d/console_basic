@@ -1,0 +1,1 @@
+news.info action( Type="omfwd" Target="/dev/console" Protocol="udp" Port="514" Template="SystemdUnitTemplate" )

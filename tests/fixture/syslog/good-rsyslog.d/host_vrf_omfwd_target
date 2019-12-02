@@ -1,0 +1,1 @@
+*.err action( Type="omfwd" Target="100.0.0.255" Protocol="udp" Port="514" Device="vrfblue" Template="SystemdUnitTemplate" )

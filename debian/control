@@ -1,0 +1,90 @@
+Source: vyatta-syslog
+Section: contrib/net
+Priority: optional
+Maintainer: Vyatta Package Maintainers <DL-vyatta-help@att.com>
+Build-Depends:
+ config-package-dev,
+ cpio,
+ debhelper (>= 9.20160403~) | dh-autoreconf,
+ debhelper (>= 9.20160709),
+ dh-yang,
+ libarray-utils-perl,
+ libfile-slurp-perl,
+ libfile-temp-perl,
+ libjson-perl,
+ libjson-xs-perl,
+ libnet-ip-perl,
+ libnetaddr-ip-perl,
+ libparse-syslog-perl,
+ libtemplate-perl,
+ libtest2-suite-perl,
+ libtest-mockmodule-perl,
+ libtest-mockobject-perl,
+ libtest-tempdir-tiny-perl,
+ libvyatta-cfg1,
+ logrotate,
+ shunit2,
+Standards-Version: 3.9.6
+
+Package: vyatta-system-syslog-v1-yang
+Architecture: all
+Depends:
+ rsyslog-openssl (>= 8.1908.0),
+ vyatta-cfg (>= 1.16),
+ vyatta-syslog,
+ ${misc:Depends},
+ ${yang:Depends}
+Breaks: vyatta-cfg-system (<< 1.6.0)
+Replaces: vyatta-cfg-system (<< 1.6.0)
+Description: vyatta-system-syslog-v1 module
+ Syslog configuration
+
+Package: vyatta-system-syslog-routing-instance-v1-yang
+Architecture: all
+Depends:
+ libvyatta-vrfmanager-perl,
+ rsyslog-czmq,
+ vyatta-syslog,
+ ${misc:Depends},
+ ${yang:Depends}
+Description: vyatta-system-syslog-routing-instance-v1 module
+ Syslog VRF configuration
+
+Package: vyatta-op-generate-syslog-v1-yang
+Architecture: all
+Depends:
+ vyatta-cfg (>= 1.16),
+ vyatta-syslog,
+ ${misc:Depends},
+ ${yang:Depends}
+Breaks: vyatta-cfg-system (<< 1.6.0)
+Replaces: vyatta-cfg-system (<< 1.6.0)
+Description: vyatta-op-generate-syslog-v1 module
+ Syslog self-signed x509 certificate generator
+
+Package: vyatta-syslog
+Architecture: any
+Depends:
+ cron,
+ libarray-utils-perl,
+ libfile-slurp-perl,
+ libfile-temp-perl,
+ libnet-ip-perl,
+ libnetaddr-ip-perl,
+ libparse-syslog-perl,
+ libsys-hostname-long-perl,
+ libsys-syslog-perl,
+ libtemplate-perl,
+ libvyatta-cfgclient-perl,
+ logrotate,
+ rsyslog | system-log-daemon,
+ vyatta-system,
+ vyatta-util (>= 0.16),
+ ${misc:Depends},
+ ${perl:Depends},
+Breaks: vyatta-system (<< 2.28), vyatta-debian-system-config (<< 1.17)
+Conflicts: ${diverted-files}
+Provides: libvyatta-syslog-perl, ${diverted-files}
+Description: Vyatta syslog integration
+ Provides scripts and files necessary to configure syslog with the
+ Vyatta configuration system.

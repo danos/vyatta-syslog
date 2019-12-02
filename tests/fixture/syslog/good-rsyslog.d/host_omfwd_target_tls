@@ -1,0 +1,6 @@
+*.err action( Type="omfwd" Target="100.0.0.100" Protocol="tcp" Port="514" StreamDriverMode="1" StreamDriver="ossl" StreamDriverAuthMode="x509/name" StreamDriverPermittedPeers="example.com" gnutlsPriorityString="cipherstring=ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384" Template="SystemdUnitTemplate" )
+global(
+    DefaultNetstreamDriverCAFile="/config/auth/ca.pem"
+    DefaultNetstreamDriverCertFile="/config/auth/local.pem"
+    DefaultNetstreamDriverKeyFile="/config/auth/key.pem"
+)

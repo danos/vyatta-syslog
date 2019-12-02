@@ -1,0 +1,2 @@
+$outchannel global,/var/log/messages,261120,/usr/sbin/logrotate /opt/vyatta/etc/logrotate/global
+*.info :omfile:$global

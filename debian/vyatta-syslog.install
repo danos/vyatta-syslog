@@ -1,0 +1,3 @@
+etc/rsyslog.conf.vyatta
+scripts/netplug/deladdr.d/rsyslogd /etc/netplug/deladdr.d
+scripts/netplug/newaddr.d/rsyslogd /etc/netplug/newaddr.d

@@ -1,0 +1,2 @@
+$outchannel file_papersheet,/var/log/user/papersheet,261120,/usr/sbin/logrotate /opt/vyatta/etc/logrotate/file_papersheet
+*.info :omfile:$file_papersheet

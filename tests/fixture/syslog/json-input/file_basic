@@ -1,0 +1,21 @@
+{
+  "system":{
+    "syslog":{
+      "file":[
+        {
+          "tagnode":"papersheet",
+          "archive":{
+            "files":5,
+            "size":250
+          },
+          "facility":[
+            {
+              "tagnode":"all",
+              "level":"info"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}  

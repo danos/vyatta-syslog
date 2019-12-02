@@ -1,0 +1,49 @@
+#  /etc/rsyslog.conf	Configuration file for rsyslog.
+#
+#			For more information see
+#			/usr/share/doc/rsyslog-doc/html/rsyslog_conf.html
+
+
+#################
+#### MODULES ####
+#################
+
+# load structured data from the journal instead of imuxsock + imklog and parse it
+# so that full unit names can be diplayed (eg: sshd@vrf-blue)
+module(load="imjournal" PersistStateInterval="100" IgnorePreviousMessages="on" DefaultSeverity="6" WorkAroundJournalBug="off")
+module(load="mmjsonparse")
+action(type="mmjsonparse")
+
+$template SystemdUnitTemplateFile,"%timestamp% %$!_HOSTNAME% %$!_SYSTEMD_UNIT% %syslogtag%%$!MESSAGE:::sp-if-no-1st-sp%%$!MESSAGE:::drop-last-lf%\n",casesensitive
+$template SystemdUnitTemplate,"<%pri%>1 %timestamp:::date-rfc3339% %$!_HOSTNAME% %$!_SYSTEMD_UNIT% %syslogtag% %msgid% %structured-data%%$!MESSAGE:::sp-if-no-1st-sp%%$!MESSAGE:::drop-last-lf%\n",casesensitive
+
+###########################
+#### GLOBAL DIRECTIVES ####
+###########################
+
+# Use high precision timestamp format
+$ActionFileDefaultTemplate SystemdUnitTemplateFile
+
+if ( $!_SYSTEMD_UNIT == "" ) then set $!_SYSTEMD_UNIT = "-";
+
+# Filter duplicated messages
+$RepeatedMsgReduction on
+
+#
+# Set the default permissions for all log files.
+#
+$FileOwner root
+$FileGroup adm
+$FileCreateMode 0640
+$DirCreateMode 0755
+$Umask 0022
+
+#
+# Where to place spool and state files
+#
+$WorkDirectory /var/spool/rsyslog
+
+#
+# Include all config files in /etc/rsyslog.d/
+#
+$IncludeConfig /etc/rsyslog.d/*.conf

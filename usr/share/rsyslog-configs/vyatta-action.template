@@ -1,0 +1,54 @@
+[% FOREACH action IN actions %] 
+action(
+[% IF action.item('type') == 'omfwd' %]
+	[% IF action.item('type') %]
+	Type="[% action.item('type') %]"
+	[% END %]
+	[% IF action.item('address') %]
+	IpFreeBind="1" Address="[% action.item('address') %]"
+	[% END %]
+	[% IF action.item('target') %]
+	Target="[% action.item('target') %]"
+	[% END %]
+	[% IF action.item('protocol') %]
+	Protocol="[% action.item('protocol') %]"
+	[% END %]
+	[% IF action.item('ip-port') %]
+	Port="[% action.item('ip-port') %]"
+	[% END %]
+	[% IF action.item('device') %]
+	Device="[% action.item('device') %]"
+	[% END %]
+	[% IF action.item('tls') %]
+		StreamDriverMode="1"
+		[% IF action.item('tls').item('StreamDriver') %]
+		StreamDriver="[% action.item('tls').item('StreamDriver') %]"
+		[% END %]
+		[% IF action.item('tls').item('StreamDriverAuthMode') %]
+		StreamDriverAuthMode="[% action.item('tls').item('StreamDriverAuthMode') %]"
+		[% END %]
+		[% IF action.item('tls').item('StreamDriverCertFile') %]
+		StreamDriverCertFile="[% action.item('tls').item('StreamDriverCertFile') %]"
+		[% END %]
+		[% IF action.item('tls').item('StreamDriverKeyFile') %]
+		StreamDriverKeyFile="[% action.item('tls').item('StreamDriverKeyFile') %]"
+		[% END %]
+		[% IF action.item('tls').item('StreamDriverCAFile') %]
+			StreamDriverCAFile=[[% FOREACH ca IN action.item('tls').item('StreamDriverCAFile') %]"[% ca.item('tagnode') %]", [% END %]]
+		[% END %]
+		[% parr = action.item('tls').item('StreamDriverPermittedPeers') %]
+		[% IF parr && parr.size %]
+			StreamDriverPermittedPeers=[% IF loop.size > 1 && !loop.last %][[% END %][% FOREACH peer IN parr %]"[% peer.item('tagnode') %]"[% IF loop.size > 1 && !loop.last %],[% END %][% END %][% IF loop.size > 1 && !loop.last %]][% END %]
+		[% END %]
+		[% IF action.item('tls').item('gnutlsPriorityString') %]
+		gnutlsPriorityString="[% action.item('tls').item('gnutlsPriorityString') %]"
+		[% END %]
+	[% END %]
+	[% IF action.item('template') %]
+	[% action.item('template') %]
+	[% ELSE %]
+	Template="SystemdUnitTemplate"
+	[% END %]
+[% END %]
+)
+[% END %]

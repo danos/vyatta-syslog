@@ -1,0 +1,17 @@
+{
+  "system":{
+    "syslog":{
+      "user":[
+        {
+          "tagnode":"vyatta",
+          "facility":[
+            {
+              "tagnode":"all",
+              "level":"crit"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

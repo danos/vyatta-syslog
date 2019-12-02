@@ -1,0 +1,5 @@
+vyatta-syslog (1.0) unstable; urgency=medium
+
+  * Initial commit
+
+ -- Vyatta-Package Maintainers <DL-vyatta-help@att.com>  Mon, 2 Dec 2019 10:36:28 +0000

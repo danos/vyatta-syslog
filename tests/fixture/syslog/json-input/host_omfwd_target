@@ -1,0 +1,17 @@
+{
+  "system":{
+    "syslog":{
+      "host":[
+        {
+          "tagnode":"100.0.0.200",
+          "facility":[
+            {
+              "tagnode":"all",
+              "level":"err"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

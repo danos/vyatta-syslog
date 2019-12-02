@@ -1,0 +1,47 @@
+{
+  "system":{
+    "syslog":{
+      "host":[
+        {
+          "tagnode":"100.0.0.100",
+          "facility":[
+            {
+              "tagnode":"all",
+              "level":"err"
+            }
+          ],
+          "protocol":"tcp",
+          "tls":{
+            "authentication":{
+              "mode":"x509/name",
+              "peers":[
+                {
+                  "peer":"example.com"
+                }
+              ]
+
+            },
+            "certificate-authority":[
+              {
+                "tagnode":"Verisign",
+                "file":"ca.pem"
+              }
+            ],
+            "local-certificate":{
+              "certificate":"local.pem",
+              "key":"key.pem"
+            },
+            "cipher-suite":[
+              {
+                "cipher":"ECDHE-ECDSA-AES128-GCM-SHA256"
+              },
+              {
+                "cipher":"ECDHE-ECDSA-AES256-GCM-SHA384"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
