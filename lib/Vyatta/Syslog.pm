@@ -3,7 +3,7 @@
 
 # **** License ****
 #
-# Copyright (c) 2017-2019 AT&T Intellectual Property.
+# Copyright (c) 2017-2020 AT&T Intellectual Property.
 #    All Rights Reserved.
 # Copyright (c) 2014-2017, Brocade Communications Systems, Inc.
 #    All Rights Reserved.
@@ -45,8 +45,10 @@ my $DEFAULT_VRF_NAME      = 'default';
 my $DEFAULT_AUTH_LOCATION = '/config/auth';
 our $ACTION_TEMPLATE =
   '/opt/vyatta/share/rsyslog-configs/vyatta-action.template';
+our $SOURCE_INTERFACE_FILE = "/run/vyatta/rsyslog/source-interface-list";
+my $SI_TMP_FILE           = "/run/vyatta/rsyslog/si.XXXXXX";
 
-our @EXPORT = qw(update_rsyslog_config $SYSLOG_CONF $ACTION_TEMPLATE);
+our @EXPORT = qw(update_rsyslog_config $SYSLOG_CONF $ACTION_TEMPLATE $SOURCE_INTERFACE_FILE);
 
 # Values come from /usr/include/sys/syslog.h
 my %FACILITY_VALS = (
@@ -91,6 +93,7 @@ my %fac_override   = ();
 my @discard_regexs = ();
 my $rl_interval;
 my $rl_burst;
+my $si_list = "";
 
 sub get_rate_limit_parms {
     my ($config) = @_;
@@ -425,12 +428,17 @@ sub get_active_ip {
             }
 
             openlog( "syslog", "", LOG_USER );
+            my %afinet_map = ( 4 => "inet", 6 => "inet6" );
+            my $addr;
+            $addr  = (split( '/', $address))[0] if defined $address;
             if ( $afinet == 4 ) {
                 if ( defined($address) ) {
+                    $si_list .= "$dev $afinet_map{$afinet} $addr\n";
                     syslog( LOG_INFO,
                         "Logging to IPv4 hosts enabled using source address "
                           . "$address on interface $dev\n" );
                 } else {
+                    $si_list .= "$dev $afinet_map{$afinet}\n";
                     syslog( LOG_WARNING,
                             "Logging to IPv4 hosts disabled until $dev has an "
                           . "IPv4 address and is up" );
@@ -440,10 +448,12 @@ sub get_active_ip {
                 }
             } elsif ( $afinet == 6 ) {
                 if ( defined($address) ) {
+                    $si_list .= "$dev $afinet_map{$afinet} $addr\n";
                     syslog( LOG_INFO,
                         "Logging to IPv6 hosts enabled using source address "
                           . "$address on interface $dev\n" );
                 } else {
+                    $si_list .= "$dev $afinet_map{$afinet}\n";
                     syslog( LOG_WARNING,
                             "Logging to IPv6 hosts disabled until $dev has an "
                           . "IPv6 address and is up" );
@@ -869,6 +879,7 @@ sub update_rsyslog_config {
     # Don't run rsyslog if not configured
     if ( !@actions ) {
         unlink $SYSLOG_CONF;
+        unlink $SOURCE_INTERFACE_FILE;
         #
         # Restart service
         system("systemctl reset-failed rsyslog");
@@ -876,6 +887,12 @@ sub update_rsyslog_config {
         #
         # Success
         return 0;
+    }
+
+    if ( open( my $si_fh, '>', $SI_TMP_FILE ) ) {
+        print $si_fh $si_list;
+        close $si_fh;
+        rename($SI_TMP_FILE, $SOURCE_INTERFACE_FILE);
     }
 
     #

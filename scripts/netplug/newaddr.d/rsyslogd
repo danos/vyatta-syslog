@@ -1,16 +1,65 @@
 #!/usr/bin/perl
 #
-# Copyright (c) 2019, AT&T Intellectual Property. All rights reserved.
+# Copyright (c) 2019-2020, AT&T Intellectual Property. All rights reserved.
 #
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
 use strict;
 use warnings;
+use File::Slurp qw(read_file);
 
 use lib "/opt/vyatta/share/perl5/";
 use Vyatta::Syslog;
 
-update_rsyslog_config();
+sub usage {
+    print <<EOF;
+Usage: <device> <inet|inet6> <address>
+EOF
+    exit 1;
+}
+
+my $dev   = shift;
+my $proto = shift;
+my $addr  = shift;
+
+usage() unless defined($dev);
+usage() unless defined($proto);
+usage() unless defined($addr);
+
+my $restart = 0;
+
+sub get_src_addrs {
+    my ( $dev, $af ) = @_;
+
+    my @addrs = ();
+    if ( defined($dev) ) {
+        foreach my $line (
+            split( '\n', `ip addr show scope global dev $dev | grep $af` ) )
+        {
+            my ( $proto, $addr, $rest ) = split( ' ', $line, 3 );
+            push @addrs, $addr;
+        }
+    }
+    return \@addrs;
+}
+
+foreach my $line ( read_file( $SOURCE_INTERFACE_FILE, 'err_mode' => 'quiet' ) )
+{
+    chomp($line);
+    my ( $sdev, $af, $saddr ) = split( ' ', $line, 3 );
+    if ( $sdev eq $dev && $af eq $proto ) {
+        if ( defined($saddr) ) {
+            my $addrs = get_src_addrs( $sdev, $af );
+            foreach my $a (@$addrs) {
+                $a =~ s/\/.*//;
+                exit 0 if ( $a eq $saddr );
+            }
+        }
+        $restart = 1;
+    }
+}
+
+update_rsyslog_config() if ($restart);
 
 exit 0;

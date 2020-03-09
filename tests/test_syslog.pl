@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 
 #
-# Copyright (c) 2019, AT&T Intellectual Property
+# Copyright (c) 2019-2020, AT&T Intellectual Property
 # All rights reserved.
 #
 # SPDX-License-Identifier: GPL-2.0-only
@@ -54,6 +54,8 @@ undef $SYSLOG_CONF;
 our $SYSLOG_CONF = "$tmpdir/vyatta-log.conf";
 undef $ACTION_TEMPLATE;
 our $ACTION_TEMPLATE = "../usr/share/rsyslog-configs/vyatta-action.template";
+undef $SOURCE_INTERFACE_FILE;
+our $SOURCE_INTERFACE_FILE = "../run/var/rsyslog/source_interface_list";
 
 #
 # Vyatta::Configd Mocking
