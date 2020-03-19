@@ -1,3 +1,12 @@
+vyatta-syslog (1.1) unstable; urgency=medium
+
+  [ Sharmila Podury ]
+  * Excessive number of rsyslog restarts at boot
+
+  [ Charles (Chas) Williams ]
+
+ -- Charles (Chas) Williams <ciwillia@vyatta.att-mail.com>  Thu, 19 Mar 2020 11:14:15 -0400
+
 vyatta-syslog (1.0) unstable; urgency=medium
 
   * Initial commit
