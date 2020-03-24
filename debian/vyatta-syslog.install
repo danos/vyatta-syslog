@@ -1,3 +1,5 @@
 etc/rsyslog.conf.vyatta
 scripts/netplug/deladdr.d/rsyslogd /etc/netplug/deladdr.d
 scripts/netplug/newaddr.d/rsyslogd /etc/netplug/newaddr.d
+scripts/netplug/linkup.d/rsyslogd /etc/netplug/linkup.d
+scripts/netplug/linkdown.d/rsyslogd /etc/netplug/linkdown.d

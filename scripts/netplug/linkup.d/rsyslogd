@@ -14,30 +14,25 @@ use Vyatta::Syslog;
 
 sub usage {
     print <<EOF;
-Usage: <device> <inet|inet6> <address>
+Usage: <device>
 EOF
     exit 1;
 }
 
-my $dev   = shift;
-my $proto = shift;
-my $addr  = shift;
+my $dev = shift;
 
 usage() unless defined($dev);
-usage() unless defined($proto);
-usage() unless defined($addr);
 
 foreach my $line ( read_file( $SOURCE_INTERFACE_FILE, 'err_mode' => 'quiet' ) )
 {
     chomp($line);
-    my ( $sdev, $af, $saddr ) = split( ' ', $line, 3 );
-    if (   $sdev eq $dev
-        && $af eq $proto
-        && defined($saddr)
-        && $saddr eq $addr )
-    {
-        update_rsyslog_config();
-        last;
+    my $sdev = ( split( ' ', $line ) )[0];
+    if ( $sdev eq $dev ) {
+        my $addrs = `ip -6 addr show scope global dev $sdev`;
+        if ( !$addrs ) {
+            update_rsyslog_config();
+            last;
+        }
     }
 }
 

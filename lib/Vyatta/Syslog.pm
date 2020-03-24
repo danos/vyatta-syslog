@@ -588,9 +588,11 @@ sub get_action {
         ( $TARGET, $PORT ) = get_target_port($host);
     }
 
-    my $ADDRESS = get_active_ip( $config, get_src_intf($config), $TARGET );
-    if ( defined get_src_intf($config) ) {
-        return unless defined $ADDRESS;
+    my $dev = get_src_intf($config);
+    my $ADDRESS = get_active_ip( $config, $dev, $TARGET );
+    if ( defined($dev) && !defined($ADDRESS) ) {
+        $si_list .= "$dev\n";
+        return;
     }
 
     # MAP functions follow

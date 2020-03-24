@@ -27,8 +27,6 @@ usage() unless defined($dev);
 usage() unless defined($proto);
 usage() unless defined($addr);
 
-my $restart = 0;
-
 sub get_src_addrs {
     my ( $dev, $af ) = @_;
 
@@ -37,7 +35,7 @@ sub get_src_addrs {
         foreach my $line (
             split( '\n', `ip addr show scope global dev $dev | grep $af` ) )
         {
-            my ( $proto, $addr, $rest ) = split( ' ', $line, 3 );
+            my $addr = ( split( ' ', $line ) )[1];
             push @addrs, $addr;
         }
     }
@@ -48,18 +46,17 @@ foreach my $line ( read_file( $SOURCE_INTERFACE_FILE, 'err_mode' => 'quiet' ) )
 {
     chomp($line);
     my ( $sdev, $af, $saddr ) = split( ' ', $line, 3 );
-    if ( $sdev eq $dev && $af eq $proto ) {
-        if ( defined($saddr) ) {
+    if ( $sdev eq $dev ) {
+        if ( defined($af) && $af eq $proto && defined($saddr) ) {
             my $addrs = get_src_addrs( $sdev, $af );
             foreach my $a (@$addrs) {
                 $a =~ s/\/.*//;
                 exit 0 if ( $a eq $saddr );
             }
         }
-        $restart = 1;
+        update_rsyslog_config();
+        last;
     }
 }
-
-update_rsyslog_config() if ($restart);
 
 exit 0;
