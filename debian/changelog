@@ -1,3 +1,12 @@
+vyatta-syslog (1.2) unstable; urgency=medium
+
+  [ Sharmila Podury ]
+  * Shutting down source interface stopping logging is broken
+
+  [ Charles (Chas) Williams ]
+
+ -- Charles (Chas) Williams <ciwillia@vyatta.att-mail.com>  Wed, 25 Mar 2020 11:56:38 -0400
+
 vyatta-syslog (1.1) unstable; urgency=medium
 
   [ Sharmila Podury ]
