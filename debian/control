@@ -31,6 +31,7 @@ Architecture: all
 Depends:
  rsyslog-openssl (>= 8.1908.0),
  vyatta-cfg (>= 1.16),
+ vyatta-service-snmp (>= 0.40),
  vyatta-syslog,
  ${misc:Depends},
  ${yang:Depends}
