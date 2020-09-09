@@ -46,9 +46,10 @@ my $DEFAULT_AUTH_LOCATION = '/config/auth';
 our $ACTION_TEMPLATE =
   '/opt/vyatta/share/rsyslog-configs/vyatta-action.template';
 our $SOURCE_INTERFACE_FILE = "/run/vyatta/rsyslog/source-interface-list";
-my $SI_TMP_FILE           = "/run/vyatta/rsyslog/si.XXXXXX";
+my $SI_TMP_FILE = "/run/vyatta/rsyslog/si.XXXXXX";
 
-our @EXPORT = qw(update_rsyslog_config $SYSLOG_CONF $ACTION_TEMPLATE $SOURCE_INTERFACE_FILE);
+our @EXPORT =
+  qw(update_rsyslog_config $SYSLOG_CONF $ACTION_TEMPLATE $SOURCE_INTERFACE_FILE);
 
 # Values come from /usr/include/sys/syslog.h
 my %FACILITY_VALS = (
@@ -430,7 +431,7 @@ sub get_active_ip {
             openlog( "syslog", "", LOG_USER );
             my %afinet_map = ( 4 => "inet", 6 => "inet6" );
             my $addr;
-            $addr  = (split( '/', $address))[0] if defined $address;
+            $addr = ( split( '/', $address ) )[0] if defined $address;
             if ( $afinet == 4 ) {
                 if ( defined($address) ) {
                     $si_list .= "$dev $afinet_map{$afinet} $addr\n";
@@ -894,7 +895,7 @@ sub update_rsyslog_config {
     if ( open( my $si_fh, '>', $SI_TMP_FILE ) ) {
         print $si_fh $si_list;
         close $si_fh;
-        rename($SI_TMP_FILE, $SOURCE_INTERFACE_FILE);
+        rename( $SI_TMP_FILE, $SOURCE_INTERFACE_FILE );
     }
 
     #
