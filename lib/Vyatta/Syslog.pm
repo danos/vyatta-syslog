@@ -643,19 +643,14 @@ sub get_action {
 
         # What action are we building?
         my $act_config;
+        my $tls_config;
         $c->{protocol} = 'udp' unless defined $c->{protocol};
         $c->{protocol} = 'udp' if ( $TARGET =~ /console/ );
         $c->{'ip-port'} = '514';
         $c->{'ip-port'} = $PORT if defined $PORT;
         if ( $c->{protocol} eq 'tcp' ) {
-            $act_config = {
-                "type"     => 'omfwd',
-                "address"  => $ADDRESS,
-                "protocol" => $c->{protocol},
-                "ip-port"  => $c->{'ip-port'},
-                "target"   => $TARGET,
-                "template" => $template_str,
-                "tls"      => {
+            if (%$encrypt_params) {
+                $tls_config = {
                     "tls-version" => $encrypt_params->{'tls-version'},
                     "gnutlsPriorityString" =>
                       $gen_cipher_suite->($encrypt_params),
@@ -664,7 +659,16 @@ sub get_action {
                     "StreamDriverPermittedPeers" => [
                         map { $gen_peer_list->($_) } @{ $auth_params->{peers} }
                     ]
-                }
+                };
+            }
+            $act_config = {
+                "type"     => 'omfwd',
+                "address"  => $ADDRESS,
+                "protocol" => $c->{protocol},
+                "ip-port"  => $c->{'ip-port'},
+                "target"   => $TARGET,
+                "template" => $template_str,
+                "tls"      => $tls_config
             };
         } elsif ( $c->{protocol} eq 'udp' ) {
             $act_config = {
