@@ -23,7 +23,7 @@ module vyatta-system-syslog-v1 {
 		 Web: www.att.com";
 
 	description
-		"Copyright (c) 2018-2019 AT&T Intellectual Property
+		"Copyright (c) 2018-2020 AT&T Intellectual Property
 		 All rights reserved.
 
 		 Copyright (c) 2014-2016 by Brocade Communications Systems, Inc.
@@ -60,6 +60,9 @@ module vyatta-system-syslog-v1 {
 
 		 Syslog configuration";
 
+	revision 2020-09-09 {
+		description "Correct ancillary text for paths to certificate and key files";
+	}
 	revision 2019-12-11 {
 		description "Restrict source-interface to UDP";
 	}
@@ -470,7 +473,7 @@ module vyatta-system-syslog-v1 {
 			}
  			uses tls-cipher-suite;
 			list certificate-authority {
-				configd:help "Name of Certificate Authority. Must be located in /config/auth";
+				configd:help "Name of Certificate Authority. This is used for description only";
 				description "Name of Certificate Authority.";
 				max-elements 1;
 				key "CA";
@@ -478,8 +481,8 @@ module vyatta-system-syslog-v1 {
 					type string;
 				}
 				leaf file {
-					configd:help "Path to CA file";
-					description "Path to CA file. Must be located in /config/auth.";
+					configd:help "Path to CA file relative to /config/auth";
+					description "Path to CA file relative to /config/auth.";
 					type string {
 						length 1..max;
 					}
@@ -490,16 +493,16 @@ module vyatta-system-syslog-v1 {
 				configd:help "Local certificate parameters";
 				description "Local certificate location and parameters.";
 				leaf certificate {
-					configd:help "Path to local Certificate file. Must be located in /config/auth";
-					description "Path to local Certificate file. Must be located in /config/auth.";
+					configd:help "Path to local certificate file relative to /config/auth";
+					description "Path to local certificate file relative to /config/auth.";
 					type string {
 						length 1..max;
 					}
 					mandatory true;
 				}
 				leaf key {
-					configd:help "Path to local Certificate key file. Must be located in /config/auth";
-					description "Path to local Certificate key file. Must be located in /config/auth.";
+					configd:help "Path to local key file relative to /config/auth";
+					description "Path to local key file relative to /config/auth.";
 					type string {
 						length 1..max;
 					}
