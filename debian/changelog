@@ -1,3 +1,14 @@
+vyatta-syslog (1.4) unstable; urgency=medium
+
+  [ Mike Manning ]
+  * Improve syslog tls help text for file paths to certificates and key
+  * Run perltidy -ce on Syslog.pm
+  * syslog tcp without tls fails
+
+  [ Charles (Chas) Williams ]
+
+ -- Charles (Chas) Williams <ciwillia@vyatta.att-mail.com>  Fri, 16 Oct 2020 13:38:41 -0400
+
 vyatta-syslog (1.3) unstable; urgency=medium
 
   [ Nicholas Brown ]
