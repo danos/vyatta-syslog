@@ -1,3 +1,10 @@
+vyatta-syslog (1.5) unstable; urgency=medium
+
+  * Remove vyatta-system.tmpfile
+  * vyatta-syslog.tmpfile: /var/run -> /run (Closes: VRVDR-53238)
+
+ -- Nicholas Brown <nick.brown@att.com>  Wed, 28 Oct 2020 08:54:05 +0000
+
 vyatta-syslog (1.4) unstable; urgency=medium
 
   [ Mike Manning ]
