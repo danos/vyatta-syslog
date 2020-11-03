@@ -29,7 +29,7 @@ template(name="SystemdUnitTemplateFile" type="list" option.casesensitive="on") {
 
 template(name="SystemdUnitTemplate" type="list" option.casesensitive="on") {
         constant(value="<")
-        property(name="pri")
+        property(name="!priority")
         constant(value=">1 ")
         property(name="timestamp" dateFormat="rfc3339")
         constant(value=" ")
@@ -61,6 +61,13 @@ module(load="builtin:omfile"
 )
 
 if ( $!_SYSTEMD_UNIT == "" ) then set $!_SYSTEMD_UNIT = "-";
+
+# Create local versions for future modification
+set $!severity = $syslogseverity;
+set $!facility = $syslogfacility;
+# This is used in the templates instead of the 'pri' message property
+# After any modifications to these must do this.
+set $!priority = $!facility * 8 + $!severity;
 
 # Filter duplicated messages
 $RepeatedMsgReduction on
