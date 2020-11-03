@@ -14,8 +14,38 @@ module(load="imjournal" PersistStateInterval="100" IgnorePreviousMessages="on" D
 module(load="mmjsonparse")
 action(type="mmjsonparse")
 
-$template SystemdUnitTemplateFile,"%timestamp% %$!_HOSTNAME% %$!_SYSTEMD_UNIT% %syslogtag%%$!MESSAGE:::sp-if-no-1st-sp%%$!MESSAGE:::drop-last-lf%\n",casesensitive
-$template SystemdUnitTemplate,"<%pri%>1 %timestamp:::date-rfc3339% %$!_HOSTNAME% %$!_SYSTEMD_UNIT% %syslogtag% %msgid% %structured-data%%$!MESSAGE:::sp-if-no-1st-sp%%$!MESSAGE:::drop-last-lf%\n",casesensitive
+template(name="SystemdUnitTemplateFile" type="list" option.casesensitive="on") {
+        property(name="timestamp")
+        constant(value=" ")
+        property(name="!_HOSTNAME")
+        constant(value=" ")
+        property(name="!_SYSTEMD_UNIT")
+        constant(value=" ")
+        property(name="syslogtag")
+        property(name="!MESSAGE" spifno1stsp="on")
+        property(name="!MESSAGE" droplastlf="on")
+        constant(value="\n")
+}
+
+template(name="SystemdUnitTemplate" type="list" option.casesensitive="on") {
+        constant(value="<")
+        property(name="pri")
+        constant(value=">1 ")
+        property(name="timestamp" dateFormat="rfc3339")
+        constant(value=" ")
+        property(name="!_HOSTNAME")
+        constant(value=" ")
+        property(name="!_SYSTEMD_UNIT")
+        constant(value=" ")
+        property(name="syslogtag")
+        constant(value=" ")
+        property(name="msgid")
+        constant(value=" ")
+        property(name="structured-data")
+        property(name="!MESSAGE" spifno1stsp="on")
+        property(name="!MESSAGE" droplastlf="on")
+        constant(value="\n")
+}
 
 ###########################
 #### GLOBAL DIRECTIVES ####
