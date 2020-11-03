@@ -51,21 +51,21 @@ template(name="SystemdUnitTemplate" type="list" option.casesensitive="on") {
 #### GLOBAL DIRECTIVES ####
 ###########################
 
-# Use high precision timestamp format
-$ActionFileDefaultTemplate SystemdUnitTemplateFile
+# Defaults for omfile module
+module(load="builtin:omfile"
+        Template="SystemdUnitTemplateFile"
+        fileOwner="root"
+        fileGroup="adm"
+        fileCreateMode="0640"
+        dirCreateMode="0755"
+)
 
 if ( $!_SYSTEMD_UNIT == "" ) then set $!_SYSTEMD_UNIT = "-";
 
 # Filter duplicated messages
 $RepeatedMsgReduction on
 
-#
-# Set the default permissions for all log files.
-#
-$FileOwner root
-$FileGroup adm
-$FileCreateMode 0640
-$DirCreateMode 0755
+# Process umask
 $Umask 0022
 
 #
