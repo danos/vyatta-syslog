@@ -48,7 +48,7 @@ our $ACTION_TEMPLATE =
 our $SOURCE_INTERFACE_FILE = "/run/vyatta/rsyslog/source-interface-list";
 my $SI_TMP_FILE = "/run/vyatta/rsyslog/si.XXXXXX";
 
-our @EXPORT =
+our @EXPORT_OK =
   qw(update_rsyslog_config $SYSLOG_CONF $ACTION_TEMPLATE $SOURCE_INTERFACE_FILE);
 
 # Values come from /usr/include/sys/syslog.h
@@ -102,6 +102,7 @@ sub get_rate_limit_parms {
     $rl_interval = $config->{'rate-limit'}->{'interval'};
     $rl_burst    = $config->{'rate-limit'}->{'burst'};
 
+    return;
 }
 
 sub get_discard_regexs {
@@ -116,6 +117,7 @@ sub get_discard_regexs {
     foreach my $regex ( @{$discardregexlist} ) {
         push @discard_regexs, $regex;
     }
+    return;
 }
 
 sub add_target_selector {
@@ -123,6 +125,7 @@ sub add_target_selector {
 
     $entries{$target}{selector} = [] unless $entries{$target}{selector};
     push @{ $entries{$target}{selector} }, $selector;
+    return;
 }
 
 sub add_target_msgregex {
@@ -130,12 +133,14 @@ sub add_target_msgregex {
 
     $entries{$target}{msgregex} = [] unless $entries{$target}{msgregex};
     push @{ $entries{$target}{msgregex} }, $msgregex;
+    return;
 }
 
 sub set_target_param {
     my ( $config, $target, $param ) = @_;
 
     $entries{$target}{$param} = $config->{'archive'}->{$param};
+    return;
 }
 
 sub get_target_param {
@@ -187,6 +192,7 @@ sub read_config {
         set_target_param( $config, $target, 'size' );
         set_target_param( $config, $target, 'files' );
     }
+    return;
 }
 
 sub print_outchannel {
@@ -209,6 +215,7 @@ sub print_outchannel {
             print $fh ":msg, ereregex, \"${regex}\" :omfile:\$$channel\n";
         }
     }
+    return;
 }
 
 # rsyslog seems to support template names up to 127 characters (see
@@ -257,6 +264,7 @@ sub add_override_facility_targets {
                 $target );
         }
     }
+    return;
 }
 
 #
@@ -272,17 +280,18 @@ sub print_rate_limit_settings {
 \$imjournalRateLimitBurst $rl_burst
 END
     }
+    return;
 }
 
 sub print_discard_rules {
+    my ($out) = @_;
 
     return if !@discard_regexs;
-
-    my ($out) = @_;
 
     foreach my $regex (@discard_regexs) {
         print $out ":msg, ereregex, \"${regex}\" stop\n";
     }
+    return;
 }
 
 #
@@ -304,6 +313,7 @@ sub print_override_templates {
               . ",\"<${prival}>${fmt}\",casesensitive\n";
         }
     }
+    return;
 }
 
 #
@@ -328,6 +338,7 @@ sub get_global_logging_config {
     my $globalcfg = get_node( $config, 'global' );
     read_config( $globalcfg, $MESSAGES )
       if ( defined($globalcfg) );
+    return;
 }
 
 #
@@ -339,6 +350,7 @@ sub get_console_logging_config {
     my $consolecfg = get_node( $config, 'console' );
     read_config( $consolecfg, $CONSOLE )
       if ( defined($consolecfg) );
+    return;
 }
 
 #
@@ -407,7 +419,7 @@ sub get_active_ip {
             $thost = get_static_host_ip( $config, $TARGET );
             $thost = $TARGET if not defined $thost;
 
-            my $taddr = new NetAddr::IP($thost);
+            my $taddr = NetAddr::IP->new($thost);
 
             # $afinet is 4 when we fail to resolv $thost
             # This is a problematic corner case where address
@@ -419,7 +431,7 @@ sub get_active_ip {
                 $afinet = Net::IP::ip_is_ipv6($tip) ? 6 : 4;
             }
             foreach my $active_ip ( @{ $active_intf->{addresses} } ) {
-                my $if_addr     = new NetAddr::IP( $active_ip->{address} );
+                my $if_addr     = NetAddr::IP->new( $active_ip->{address} );
                 my ($ACTIVE_IP) = Net::IP::ip_splitprefix($if_addr);
                 my $if_afinet   = Net::IP::ip_is_ipv6($ACTIVE_IP) ? 6 : 4;
 
@@ -493,6 +505,7 @@ sub get_host_logging_config {
             }
         }
     }
+    return;
 }
 
 #
@@ -509,6 +522,7 @@ sub get_file_logging_config {
             read_config( $element, $target );
         }
     }
+    return;
 }
 
 #
@@ -526,6 +540,7 @@ sub get_user_logging_config {
             read_config( $element, ':omusrmsg:' . $user_target );
         }
     }
+    return;
 }
 
 sub get_target_port {
@@ -756,6 +771,7 @@ END
 sub write_log_rotation_file {
     system("/opt/vyatta/sbin/vyatta_update_logrotate.pl @_ 1") == 0
       or die "Can't genrate global log rotation config: $!";
+    return;
 }
 
 #

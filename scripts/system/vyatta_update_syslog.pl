@@ -23,7 +23,7 @@
 use strict;
 use warnings;
 use lib "/opt/vyatta/share/perl5";
-use Vyatta::Syslog;
+use Vyatta::Syslog qw(update_rsyslog_config);
 
 die "$0 expects no arguments\n" if (@ARGV);
 

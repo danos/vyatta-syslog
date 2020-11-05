@@ -25,7 +25,7 @@ use lib './mock';
 use Vyatta::Configd;
 
 use lib '../lib/';
-use Vyatta::Syslog;
+use Vyatta::Syslog qw(update_rsyslog_config $SYSLOG_CONF $ACTION_TEMPLATE $SOURCE_INTERFACE_FILE);
 
 my %cases;
 my %input;
