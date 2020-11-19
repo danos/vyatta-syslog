@@ -158,6 +158,481 @@ my %facmap = (
     'protocols' => 'local7',
 );
 
+sub build_facility {
+    my ($config) = @_;
+    my $out = "";
+
+    my $facility = $config->{'facility'};
+
+    return $out if ( !defined($facility) );
+
+    $facility = $facmap{$facility} if ( $facmap{$facility} );
+    my $facval;
+    if ( $facility ne "*" ) {
+        $facval = ( $FACILITY_VALS{$facility} >> 3 )
+          if ( defined( $FACILITY_VALS{$facility} ) );
+    }
+
+    if ( defined($facval) ) {
+        $out = "(\$!facility == $facval)";
+    }
+
+    return $out;
+}
+
+sub build_severity {
+    my ($config) = @_;
+    my $sev = $config->{'severity'};
+
+    return "" if ( !defined($sev) );
+
+    my $severity = get_severity( $sev->{'equals'} );
+    return "(\$!severity == $severity)" if ( defined($severity) );
+
+    # Severity values are emergency (0) to debug (7) a lower value
+    # is a higher severity.
+    # at-least matches a severity and any severity of
+    # a higher priority, therefore '<='
+    $severity = get_severity( $sev->{'at-least'} );
+    return "(\$!severity <= $severity)" if ( defined($severity) );
+
+    # at-most matches a severity and any severity of
+    # a lower priority, therefore '>='.
+    $severity = get_severity( $sev->{'at-most'} );
+    return "(\$!severity >= $severity)" if ( defined($severity) );
+
+    return "";
+}
+
+sub build_flag {
+    my ($config)    = @_;
+    my $out         = "";
+    my @flags       = ();
+    my @wflags      = ();
+    my @woflags     = ();
+    my $withflag    = $config->{'with-flag'};
+    my $withoutflag = $config->{'without-flag'};
+
+    foreach my $wf ( @{$withflag} ) {
+        push @wflags, "(\$.flag.$wf == 1)";
+    }
+    my $with = join ' and ', @wflags;
+    $with = '(' . $with . ')' if ( $with ne "" );
+    push @flags, $with if ( $with ne "" );
+
+    foreach my $wof ( @{$withoutflag} ) {
+        push @woflags, "(\$.flag.$wof == 0)";
+    }
+    my $without = join ' and ', @woflags;
+    $without = '(' . $without . ')' if ( $without ne "" );
+
+    push @flags, $without if ( $without ne "" );
+
+    $out = join ' and ', @flags;
+
+    return $out;
+}
+
+sub build_regexes {
+    my ( $config, $subtree ) = @_;
+
+    my $out = "";
+    my @reg = ();
+
+    my $msgprop = get_node( $config, 'msg' );
+    my $regexlist = $msgprop->{$subtree};
+
+    foreach my $match ( @{$regexlist} ) {
+        my $regex  = $match->{'regex'};
+        my $unless = $match->{'unless'};
+
+        my $ocfg = " re_match(\$msg, \"$regex\") ";
+
+        if ( defined($unless) ) {
+            $ocfg .= " and (not(re_match(\$msg, \"$unless\")))";
+        }
+
+        push @reg, $ocfg;
+    }
+
+    $out = join ' or ', @reg;
+
+    $out = '(' . $out . ')' if ( $out ne "" );
+
+    return $out;
+}
+
+sub build_ratelimit {
+    my ( $config, $then, $otherwise ) = @_;
+
+    my $rulenum  = $config->{'rule-number'};
+    my $prop     = $config->{'rate-limit'}[0];
+    my $burst    = $prop->{'burst'};
+    my $interval = $prop->{'interval'};
+    my $everynth = $prop->{'select-every-nth'};
+    my $flag     = $prop->{'flag'};
+    my $out      = "";
+
+    if ( defined($burst) and defined($interval) ) {
+        $out = <<"END";
+if ((\$.tnow - \$/tstart${rulenum}) >= ${interval}) then {
+    set \$/tstart${rulenum} = \$.tnow;
+    set \$/burstcount${rulenum} = 0;
+}
+if (\$/burstcount${rulenum} >= ${burst} ) then {
+    ${otherwise}
+} else {
+    set \$/burstcount${rulenum} = \$/burstcount${rulenum} + 1;
+    ${then}
+}
+END
+    } elsif ( defined($everynth) ) {
+        $out = <<"END";
+if (\$/count${rulenum} >= ${everynth}) then {
+    set \$/count${rulenum} = 0;
+}
+if (\$/count${rulenum} == 0) then {
+    set \$/count${rulenum} = \$/count${rulenum} + 1;
+    ${then}
+} else {
+    set \$/count${rulenum} = \$/count${rulenum} + 1;
+    ${otherwise}
+}
+END
+
+    }
+
+    if ( $flag ne '*' ) {
+        $out = "if (\$.flag.$flag == 1) then {\n" . $out . "\n}\n";
+    }
+
+    return $out;
+}
+
+sub get_facility {
+    my ($facility) = @_;
+
+    return $facility if ( !defined($facility) );
+
+    $facility = $facmap{$facility} if ( $facmap{$facility} );
+    my $facval;
+    if ( $facility ne "*" ) {
+        $facval = ( $FACILITY_VALS{$facility} >> 3 )
+          if ( defined( $FACILITY_VALS{$facility} ) );
+    }
+
+    return $facval;
+}
+
+sub get_severity {
+    my ($severity) = @_;
+
+    return $severity if ( !defined($severity) );
+
+    $severity = $SEVERITY_VALS{$severity};
+
+    return $severity;
+}
+
+sub get_hostname {
+    my ($hostname) = @_;
+
+    $hostname =~ s/[:\.]/_/g;
+
+    return $hostname;
+}
+
+sub build_actions {
+    my ( $config, $class ) = @_;
+
+    my $out        = "";
+    my @outactions = ();
+    my $actions    = $config->{$class};
+
+    my $facility = get_facility( $actions->{'set-facility'} );
+    push @outactions, "set \$!facility = $facility;" if ( defined($facility) );
+
+    my $severity = get_severity( $actions->{'set-severity'} );
+    push @outactions, "set \$!severity = $severity;" if ( defined($severity) );
+
+    push @outactions, "call setpri"
+      if ( defined($facility) or defined($severity) );
+
+    foreach my $setflag ( @{ $actions->{'set-flag'} } ) {
+        push @outactions, "set \$.flag.$setflag = 1;";
+    }
+
+    foreach my $clearflag ( @{ $actions->{'clear-flag'} } ) {
+        push @outactions, "set \$.flag.$clearflag = 0;";
+    }
+
+    push @outactions, "set \$!indicator = \"$actions->{'set-indicator'}\";"
+      if ( defined( $actions->{'set-indicator'} ) );
+
+    foreach my $file ( @{ $actions->{'file'} } ) {
+        push @outactions, "call fileaction_$file";
+    }
+
+    foreach my $host ( @{ $actions->{'host'} } ) {
+        push @outactions, "call hostaction_$host";
+    }
+
+    foreach my $user ( @{ $actions->{'user'} } ) {
+        if ( $user eq '*' ) {
+            push @outactions, "call allusersaction";
+        } else {
+            push @outactions, "call useraction_$user";
+        }
+    }
+
+    push @outactions, "call consoleaction"
+      if ( exists( $actions->{'console'} ) );
+
+    push @outactions, "stop" if ( exists( $actions->{'discard'} ) );
+
+    $out = join "\n", @outactions;
+
+    $out = "continue" if ( $out eq '' );
+
+    return $out;
+}
+
+sub build_match {
+    my ( $config, $thenactions, $otherwiseactions ) = @_;
+
+    my $out       = "";
+    my @selectors = ();
+
+    my $matches = $config->{'match'};
+
+    my $facility = build_facility($matches);
+    push @selectors, $facility if ( $facility ne "" );
+
+    my $severity = build_severity($matches);
+    push @selectors, $severity if ( $severity ne "" );
+
+    my $flag = build_flag($matches);
+    push @selectors, $flag if ( $flag ne "" );
+
+    my $regexes = build_regexes( $matches, 'posix-match' );
+    push @selectors, $regexes if ( $regexes ne "" );
+
+    $out = join ' and ', @selectors;
+    $out = "(1 == 1)" if ( $out eq "" );
+
+    $out = "if ($out) then {\n $thenactions\n} else {\n$otherwiseactions\n}\n";
+    return $out;
+}
+
+sub build_rule {
+    my ($config) = @_;
+    my $out      = "";
+    my $num      = $config->{'rule-number'};
+
+    return $out if ( exists( $config->{'disable'} ) );
+
+    my $thenactions      = build_actions( $config, 'then' );
+    my $otherwiseactions = build_actions( $config, 'otherwise' );
+
+    if ( defined( $config->{'match'} ) ) {
+        $out = build_match( $config, $thenactions, $otherwiseactions );
+    } elsif ( defined( $config->{'rate-limit'} ) ) {
+        $out = build_ratelimit( $config, $thenactions, $otherwiseactions );
+    } else {
+        $out = $thenactions;
+    }
+
+    return $out;
+}
+
+sub build_tls_certificates {
+    my ($config) = @_;
+
+    # TODO: Omfwd does not support per action certificates.
+    my $cert_locations = '';
+    my @ca;
+    my $sys    = get_node( $config, 'system' );
+    my $syslog = get_node( $sys,    'syslog-enhanced' );
+    my $gen_ca_list = sub {
+        my ($ca) = @_;
+        return "${DEFAULT_AUTH_LOCATION}/$ca->{file}";
+    };
+
+    my $encrypt_params = $syslog->{tls};
+    if ( defined( $encrypt_params ) ) {
+        my $ca_params = $encrypt_params->{'certificate-authority'};
+        my $cert_params = $encrypt_params->{'local-certificate'};
+        if ( !defined($ca_params) || !defined($cert_params) ) {
+            print "Error: TLS configured without proper Certificates.\n";
+            return;
+        }
+        @ca = map { $gen_ca_list->($_) } @{$ca_params}
+          if defined $ca_params;
+        $cert_locations = <<"END";
+global(
+    DefaultNetstreamDriverCAFile="$ca[0]"
+    DefaultNetstreamDriverCertFile="${DEFAULT_AUTH_LOCATION}/$cert_params->{certificate}"
+    DefaultNetstreamDriverKeyFile="${DEFAULT_AUTH_LOCATION}/$cert_params->{key}"
+)
+END
+    }
+
+    return $cert_locations;
+}
+
+sub build_rules {
+    my ($config) = @_;
+    my $out = "";
+
+    my $sys    = get_node( $config, 'system' );
+    my $syslog = get_node( $sys,    'syslog-enhanced' );
+    my $rules  = get_node( $syslog, 'rule' );
+
+    foreach my $rule ( @{$rules} ) {
+        my $rl = build_rule($rule);
+        $out .= "\n$rl\n" if ( $rl ne "" );
+    }
+
+    return $out;
+}
+
+sub build_targets {
+    my ($config) = @_;
+    my $out      = "";
+    my %users    = ();
+
+    my $sys    = get_node( $config, 'system' );
+    my $syslog = get_node( $sys,    'syslog-enhanced' );
+    my $files  = $syslog->{'file'};
+    my $hosts  = $syslog->{'host'};
+
+    my @targets = ();
+
+    foreach my $file ( @{$files} ) {
+        my $name      = $file->{'filename'};
+        my $fileentry = $file->{'entry'};
+
+        my $archive = $file->{'archive'};
+        my $files   = $archive->{'files'};
+        my $size    = $archive->{'size'};
+
+        write_log_rotation_file( $name, $files, $size );
+
+        $size = ( $size + 5 ) * 1024;
+        my $filetarget = "";
+        $filetarget = <<"END";
+
+\$outchannel file_${fileentry},/var/log/user/${name},${size},/usr/sbin/logrotate ${LOGROTATE_CFG_DIR}/file_${name}
+set \$.send.file.${fileentry} = 1;
+
+ruleset(name="fileaction_${fileentry}") {
+    if (\$.send.file.${fileentry} == 1) then {
+        :omfile:\$file_${fileentry}
+        set \$.send.file.${fileentry} = 0;
+    }
+}
+END
+
+        push @targets, $filetarget;
+    }
+
+    foreach my $host ( @{$hosts} ) {
+        my $action =
+          get_action( "", $config, $host->{'routing-instance'}, $host );
+        my $hostentry = $host->{'entry'};
+
+        my $hosttarget = "";
+        $hosttarget = <<"END";
+
+set \$.send.host.${hostentry} = 1;
+
+ruleset(name="hostaction_${hostentry}") {
+    if (\$.send.host.${hostentry} == 1) then {
+        ${action}
+        set \$.send.host.${hostentry} = 0;
+    }
+}
+END
+        push @targets, $hosttarget;
+    }
+
+    my $rules = $syslog->{'rule'};
+    my $console;
+    foreach my $rule ( @{$rules} ) {
+        my $then = $rule->{'then'};
+
+        if ( defined($then) ) {
+            $console = 1 if ( exists( $then->{'console'} ) );
+            my $usr = $then->{'user'};
+
+            foreach my $usertarget ( @{$usr} ) {
+                $users{$usertarget} = $usertarget;
+            }
+        }
+        my $otherwise = $rule->{'otherwise'};
+        if ( defined($otherwise) ) {
+            $console = 1 if ( exists( $otherwise->{'console'} ) );
+            my $usr = $then->{'user'};
+
+            foreach my $usertarget ( @{$usr} ) {
+                $users{$usertarget} = $usertarget;
+            }
+        }
+    }
+
+    for my $user ( keys %users ) {
+        my $usertarget = "";
+
+        if ( $user eq '*' ) {
+            $usertarget = <<"END"
+
+set \$.send.allusers = 1;
+
+ruleset(name="allusersaction") {
+    if (\$.send.allusers == 1) then {
+        action(type="omusrmsg" users="*" template="WallIndicatorTemplate")
+        set \$.send.allusers = 0;
+    }
+}
+END
+        } else {
+            $usertarget = <<"END"
+
+set \$.send.user.${user} = 1;
+
+ruleset(name="useraction_${user}") {
+    if (\$.send.user.${user} == 1) then {
+        action(type="omusrmsg" users="${user}" template="StdUsrMsgIndicatorTemplate")
+        set \$.send.user.${user} = 0;
+    }
+}
+END
+        }
+
+        push @targets, $usertarget;
+    }
+
+    if ( defined($console) ) {
+        my $consoletarget = <<"END";
+
+set \$.send.console = 1;
+
+ruleset(name="consoleaction") {
+    if (\$.send.console == 1) then {
+	action(type="omfwd" Target="/dev/console" Protocol="udp" Port="514" Template="SystemdUnitTemplate")
+        set \$.send.console = 0;
+    }
+}
+END
+
+        push @targets, $consoletarget;
+    }
+
+    $out = join "\n", @targets;
+
+    return $out;
+}
+
 # This builds a data structure that maps from target
 # to selector list for that target
 sub read_config {
@@ -390,19 +865,21 @@ sub get_static_host_ip {
 # }
 #
 sub get_active_ip {
-    my ( $config, $dev, $host ) = @_;
+    my ( $config, $dev, $host, $host_cfg ) = @_;
     return unless defined $dev;
     return unless defined $config->{interfaces}->{statistics}->{interface};
 
     my @arr;
     @arr = @{ $config->{host} } if defined $config->{host};
     my $index;
-    foreach my $i ( 0 .. $#arr ) {
-        my ( $TARGET, $port ) =
-          get_target_port( $config->{host}[$i]->{tagnode} );
-        if ( $TARGET eq $host ) {
-            $index = $i;
-            last;
+    if ( !defined($host_cfg) ) {
+        foreach my $i ( 0 .. $#arr ) {
+            my ( $TARGET, $port ) =
+              get_target_port( $config->{host}[$i]->{tagnode} );
+            if ( $TARGET eq $host ) {
+                $index = $i;
+                last;
+            }
         }
     }
     my @active_interfaces =
@@ -413,9 +890,16 @@ sub get_active_ip {
             && $active_intf->{'admin-status'} eq "up" )
         {
 
-            # Pick first AFINET matching address found
-            my ( $TARGET, $port ) =
-              get_target_port( $config->{host}[$index]->{tagnode} );
+            my ( $TARGET, $port );
+            if ( defined($host_cfg) ) {
+                $TARGET = $host_cfg->{'hostname'};
+                $port   = $host_cfg->{'port'};
+            } else {
+                my $nm = $config->{host}[$index]->{tagnode};
+
+                # Pick first AFINET matching address found
+                ( $TARGET, $port ) = get_target_port($nm);
+            }
 
             my $thost;
             $thost = get_static_host_ip( $config, $TARGET );
@@ -578,36 +1062,46 @@ sub get_override_target_template {
 # address
 #
 sub get_action {
-    my ( $host, $config, $vrf ) = @_;
+    my ( $host, $config, $vrf, $host_cfg ) = @_;
     my ( $TARGET, $PORT );
     my @fwd_actions;
+    my ( $dev, $ADDRESS );
 
    # Use SYSTEMD_UNIT with SYSLOG_INDENTIFIER so that full unit name is printed,
    # eg: sshd@blue.service
     my $template_str = ' Template="SystemdUnitTemplate"';
 
-    # Extract TARGET & PORT from host string
-    if ( $host =~ /^:/ ) {
-
-        # Target is a user terminal of the form :omusrmsg:<user>
-        $TARGET = $host;
-        return "\t$TARGET\n";
-    } elsif ( $host =~ m/^@/ ) {
-        my ( $ohost, $template ) = get_override_target_template($host);
-        if ( defined($ohost) ) {
-            ( $TARGET, $PORT ) = get_target_port($ohost);
-            $template_str = " Template=\"$template\""
-              if ( defined($template) );
-        } else {
-            $TARGET = $host;
-            $PORT   = $SYSLOG_PORT;
-        }
+    if ( defined($host_cfg) ) {
+        $TARGET = $host_cfg->{'hostname'};
+        $PORT   = $host_cfg->{'port'};
+        my $dev = get_src_intf($host_cfg);
+        $ADDRESS = get_active_ip( $config, $dev, $TARGET, $host_cfg );
     } else {
-        ( $TARGET, $PORT ) = get_target_port($host);
+
+        # Extract TARGET & PORT from host string
+        if ( $host =~ /^:/ ) {
+
+            # Target is a user terminal of the form :omusrmsg:<user>
+            $TARGET = $host;
+            return "\t$TARGET\n";
+        } elsif ( $host =~ m/^@/ ) {
+            my ( $ohost, $template ) = get_override_target_template($host);
+            if ( defined($ohost) ) {
+                ( $TARGET, $PORT ) = get_target_port($ohost);
+                $template_str = " Template=\"$template\""
+                  if ( defined($template) );
+            } else {
+                $TARGET = $host;
+                $PORT   = $SYSLOG_PORT;
+            }
+        } else {
+            ( $TARGET, $PORT ) = get_target_port($host);
+        }
+
+        $dev = get_src_intf($config);
+        $ADDRESS = get_active_ip( $config, $dev, $TARGET );
     }
 
-    my $dev = get_src_intf($config);
-    my $ADDRESS = get_active_ip( $config, $dev, $TARGET );
     if ( defined($dev) && !defined($ADDRESS) ) {
         $si_list .= "$dev\n";
         return;
@@ -710,46 +1204,51 @@ sub get_action {
     # Generate forwarding actions
     #
 
+    my $cert_locations = '';
     #
     # TODO: Convert the vyatta-action.template to populate the full action line
     # including syslog selectors
-    my $index = 0;
-    my @arr;
-    @arr = @{ $config->{host} } if defined $config->{host};
-    if ( $TARGET =~ /console/ ) {
-        $config->{host}[0]->{tagnode} = $TARGET;
-    }
-    foreach my $i ( 0 .. $#arr ) {
-        if ( $config->{host}[$i]->{tagnode} eq $TARGET ) {
-            $index = $i;
+    if ( defined($host_cfg) ) {
+        push @fwd_actions, map { $gen_action_map->($_) } $host_cfg;
+    } else {
+        my $index = 0;
+        my @arr;
+        @arr = @{ $config->{host} } if defined $config->{host};
+        if ( $TARGET =~ /console/ ) {
+            $config->{host}[0]->{tagnode} = $TARGET;
         }
-    }
-    #
-    # TODO: Omfwd does not support per action certificates.
-    my $cert_locations = '';
-    my @ca;
-    if ( defined( $config->{host}[$index]->{tls} ) ) {
-        my $encrypt_params = $config->{host}[$index]->{tls};
-        my $ca_params      = $encrypt_params->{'certificate-authority'};
-        my $cert_params    = $encrypt_params->{'local-certificate'};
-        if ( !defined($ca_params) || !defined($cert_params) ) {
-            print
-              "Error: TLS configured for host $config->{host}[$index]->{tagnode}
-	    without proper Certificates.\n";
-            return;
+        foreach my $i ( 0 .. $#arr ) {
+            if ( $config->{host}[$i]->{tagnode} eq $TARGET ) {
+                $index = $i;
+            }
         }
-        @ca = map { $gen_ca_list->($_) } @{$ca_params}
-          if defined $ca_params;
-        $cert_locations = <<"END";
+        #
+        # TODO: Omfwd does not support per action certificates.
+        my @ca;
+        if ( defined( $config->{host}[$index]->{tls} ) ) {
+            my $encrypt_params = $config->{host}[$index]->{tls};
+            my $ca_params      = $encrypt_params->{'certificate-authority'};
+            my $cert_params    = $encrypt_params->{'local-certificate'};
+            if ( !defined($ca_params) || !defined($cert_params) ) {
+                print
+"Error: TLS configured for host $config->{host}[$index]->{tagnode}
+	        without proper Certificates.\n";
+                return;
+            }
+            @ca = map { $gen_ca_list->($_) } @{$ca_params}
+              if defined $ca_params;
+            $cert_locations = <<"END";
 global(
     DefaultNetstreamDriverCAFile="$ca[0]"
     DefaultNetstreamDriverCertFile="${DEFAULT_AUTH_LOCATION}/$cert_params->{certificate}"
     DefaultNetstreamDriverKeyFile="${DEFAULT_AUTH_LOCATION}/$cert_params->{key}"
 )
 END
-    }
+        }
 
-    push @fwd_actions, map { $gen_action_map->($_) } $config->{host}[$index];
+        push @fwd_actions,
+          map { $gen_action_map->($_) } $config->{host}[$index];
+    }
 
     open( my $fh, '<', "$ACTION_TEMPLATE" )
       or die "Could not find vyatta-action.template";
@@ -767,6 +1266,7 @@ END
     $finished_template = $finished_template . "\n";
     $finished_template = $finished_template . $cert_locations
       if ( $TARGET !~ /console/ );
+
     return $finished_template;
 }
 
@@ -899,6 +1399,45 @@ sub update_rsyslog_config {
         my @action = generate_instance_actions( $pconfig, $vrf );
         push @actions, @action if ( $action[0] ne '' );
     }
+
+    my $econfig;
+    my $partial_econfig;
+    $partial_econfig = $client->tree_get_hash("system syslog-enhanced")
+      if $client->node_exists( $Vyatta::Configd::Client::AUTO,
+        "system syslog-enhanced" );
+
+    if ( defined($partial_econfig) ) {
+        push @actions, "set \$.tnow = \$\$UPTIME;\n";
+        push @actions, "set \$!severity = \$syslogseverity;\n";
+        push @actions, "set \$!facility = \$syslogfacility;\n";
+        push @actions, "ruleset(name=\"setpri\") {\n";
+        push @actions, "set \$!priority = (\$!facility * 8) + \$!severity;\n";
+        push @actions, "}\n";
+    }
+    $econfig->{system} = $partial_econfig;
+
+    # VRF specific syslog config
+    $partial_econfig = $client->tree_get_hash("routing routing-instance")
+      if $client->node_exists( $Vyatta::Configd::Client::AUTO,
+        "routing routing-instance" );
+    $econfig->{routing} = $partial_econfig;
+
+    $statistics = $client->tree_get_full_hash("interfaces statistics")
+      if $client->node_exists( $Vyatta::Configd::Client::AUTO, "interfaces" );
+
+    $econfig->{interfaces} = $statistics if defined $statistics;
+
+    $static_hosts =
+      $econfig->{'system'}->{'static-host-mapping'}->{'host-name'};
+    $econfig->{'static_hosts'} = $static_hosts if defined $static_hosts;
+
+    my $certs = build_tls_certificates($econfig);
+    my $files = build_targets($econfig);
+    my $rls   = build_rules($econfig);
+
+    push @actions, $certs;
+    push @actions, $files;
+    push @actions, $rls;
 
     #
     # Don't run rsyslog if not configured
