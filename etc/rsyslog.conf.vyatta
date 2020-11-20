@@ -14,6 +14,8 @@ module(load="imjournal" StateFile="imjournal.state" PersistStateInterval="100" I
 module(load="mmjsonparse")
 action(type="mmjsonparse")
 
+set $!indicator = "";
+
 template(name="SystemdUnitTemplateFile" type="list" option.casesensitive="on") {
         property(name="timestamp")
         constant(value=" ")
@@ -22,10 +24,13 @@ template(name="SystemdUnitTemplateFile" type="list" option.casesensitive="on") {
         property(name="!_SYSTEMD_UNIT")
         constant(value=" ")
         property(name="syslogtag")
+        property(name="!indicator")
         property(name="!MESSAGE" spifno1stsp="on")
         property(name="!MESSAGE" droplastlf="on")
         constant(value="\n")
 }
+
+set $!priority = $pri;
 
 template(name="SystemdUnitTemplate" type="list" option.casesensitive="on") {
         constant(value="<")
@@ -42,6 +47,7 @@ template(name="SystemdUnitTemplate" type="list" option.casesensitive="on") {
         property(name="msgid")
         constant(value=" ")
         property(name="structured-data")
+        property(name="!indicator")
         property(name="!MESSAGE" spifno1stsp="on")
         property(name="!MESSAGE" droplastlf="on")
         constant(value="\n")
