@@ -21,6 +21,8 @@ use Test::Mock::Cmd 'system' => sub { $fake_system->(@_) };
 use File::Slurp;
 use JSON::XS qw(decode_json encode_json);
 
+use Text::Diff;
+
 use lib './mock';
 use Vyatta::Configd;
 
@@ -31,15 +33,6 @@ my %cases;
 my %input;
 our $tmpdir;
 BEGIN {
-	my $test_files = 'fixture/syslog/good-rsyslog.d';
-	opendir(DIR, $test_files) or die "Could not open $test_files\n";
-	while (my $filename = readdir(DIR)) {
-		next unless -f "${test_files}/$filename";
-		my $filepath = "${test_files}/$filename";
-		$cases{$filename} = read_file($filepath);
-	}
-	closedir(DIR);
-
 	# Create working dir
 	$tmpdir = tempdir('.v-c-s.testing');
 }
@@ -77,11 +70,24 @@ sub read_test_results {
 	return $ret;
 }
 
+sub get_test_expected_results {
+	my ($test_files_dir) = @_;
+	undef %cases;
+	opendir(DIR, $test_files_dir) or die "Could not open $test_files_dir\n";
+	while (my $filename = readdir(DIR)) {
+		next unless -f "${test_files_dir}/$filename";
+		my $filepath = "${test_files_dir}/$filename";
+		$cases{$filename} = read_file($filepath);
+	}
+	closedir(DIR);
+}
+
 sub get_test_inputs {
 	my ($test_files_dir) = @_;
 	undef %input;
 	opendir(DIR, $test_files_dir) or die "Could not open $test_files_dir\n";
 	while (my $filename = readdir(DIR)) {
+		print "Reading $filename input file\n";
 		next unless -f "${test_files_dir}/$filename";
 		my $filepath = "${test_files_dir}/$filename";
 		my $json = read_file($filepath, { binmode => ':raw' });
@@ -91,6 +97,7 @@ sub get_test_inputs {
 	closedir(DIR);
 }
 
+get_test_expected_results('fixture/syslog/good-rsyslog.d');
 get_test_inputs('fixture/syslog/json-input');
 #
 # Test Vyatta Config Json to Syslog Config file conversion
@@ -123,23 +130,12 @@ foreach my $test (keys %input) {
 	#
 	unmock_Configd_tree_get_hash();
 
-	my @generated_config = split /^/m, read_test_results();
-	my @known_good_config = split /^/m, $cases{$test};
-
-	foreach my $line (@known_good_config) {
-		my $passed = 0;
-		foreach my $compare (@generated_config) {
-			if ($line eq $compare) {
-				$passed = 1;
-				is ($compare, $line, "$test");
-				last;
-			}
-		}
-		if (!$passed) {
-			is (read_test_results(), $cases{$test}, "$test");
-			last;
-		}
+	my $diff = diff(\$cases{$test}, \read_test_results());
+	if ($diff ne q{}) {
+		print $diff;
 	}
+	ok ($diff eq q{}, "$test");
+
 }
 
 # TODO: define test plan...
