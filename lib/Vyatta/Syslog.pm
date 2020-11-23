@@ -34,6 +34,7 @@ use Net::IP;
 use NetAddr::IP;
 use Sys::Syslog qw(:standard :macros);
 use Template;
+use Tie::IxHash;
 
 our $SYSLOG_CONF = '/etc/rsyslog.d/vyatta-log.conf';
 my $SYSLOG_PORT           = "514";
@@ -89,7 +90,8 @@ my %SEVERITY_VALS = (
 my @SEVERITY_NAMES =
   ( 'emerg', 'alert', 'crit', 'err', 'warning', 'notice', 'info', 'debug', );
 
-my %entries        = ();
+my %entries;
+tie %entries, 'Tie::IxHash';
 my %fac_override   = ();
 my @discard_regexs = ();
 my $rl_interval;
