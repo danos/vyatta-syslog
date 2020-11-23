@@ -99,6 +99,10 @@ sub get_test_inputs {
 
 get_test_expected_results('fixture/syslog/good-rsyslog.d');
 get_test_inputs('fixture/syslog/json-input');
+
+my $num_test = keys %input;
+plan tests => $num_test;
+
 #
 # Test Vyatta Config Json to Syslog Config file conversion
 foreach my $test (keys %input) {
