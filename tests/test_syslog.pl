@@ -9,6 +9,7 @@
 use strict;
 use warnings;
  
+# Note that the 't' directory must exist in tests/ for the Test module to function.
 use Test2::Bundle::Extended -target => 'Test2::Mock';
 use Test::TempDir::Tiny;
 use Test::MockModule;
@@ -31,11 +32,6 @@ use Vyatta::Syslog qw(update_rsyslog_config $SYSLOG_CONF $ACTION_TEMPLATE $SOURC
 
 my %cases;
 my %input;
-our $tmpdir;
-BEGIN {
-	# Create working dir
-	$tmpdir = tempdir('.v-c-s.testing');
-}
 
 #
 # Mock Vyatta::Syslog env
@@ -44,11 +40,10 @@ my $module = Test::MockModule->new('Vyatta::Syslog');
 $module->mock('write_log_rotation_file', sub { return; });
 
 undef $SYSLOG_CONF;
-our $SYSLOG_CONF = "$tmpdir/vyatta-log.conf";
 undef $ACTION_TEMPLATE;
-our $ACTION_TEMPLATE = "../usr/share/rsyslog-configs/vyatta-action.template";
+our $ACTION_TEMPLATE = "../../../../usr/share/rsyslog-configs/vyatta-action.template";
 undef $SOURCE_INTERFACE_FILE;
-our $SOURCE_INTERFACE_FILE = "../run/var/rsyslog/source_interface_list";
+our $SOURCE_INTERFACE_FILE = "../../../../run/var/rsyslog/source_interface_list";
 
 #
 # Vyatta::Configd Mocking
@@ -56,16 +51,13 @@ our $SOURCE_INTERFACE_FILE = "../run/var/rsyslog/source_interface_list";
 sub mock_Configd_tree_get_hash {
 	my ($hash) = @_;
 	my $json = encode_json \%{$hash};
-	write_file("$tmpdir/.tree_get_hash.tmp", { binmode => ':raw' }, $json);
-}
-sub unmock_Configd_tree_get_hash {
-	unlink "$tmpdir/.tree_get_hash.tmp";
+	write_file("tree_get_hash", { binmode => ':raw' }, $json);
 }
 #
 # END
 
 sub read_test_results {
-	my $ret = read_file("$tmpdir/vyatta-log.conf", err_mode => 'quiet');
+	my $ret = read_file("vyatta-log.conf", err_mode => 'quiet');
 	return "" if !defined $ret;
 	return $ret;
 }
@@ -109,36 +101,37 @@ foreach my $test (keys %input) {
 	print "Testing [$test]\n";
 	# Generate function output to test...
 	#
-	mock_Configd_tree_get_hash($input{$test});
+	in_tempdir "$test" => sub {
 
-	# Save STDERR
-	#
-	open(STDERR, '>' ,"/tmp/stderr.log");
+		our $SYSLOG_CONF = "vyatta-log.conf";
 
-	# RUN PROGRAM
-	#
-	update_rsyslog_config();
-	#
-	# END
+		mock_Configd_tree_get_hash($input{$test});
 
-	# Check if stderr is empty as well
-	#
-	my $filter = `cat "fixture/syslog/good-rsyslog.d/${test}.stderrfilter" 2>/dev/null`;
-	my $in = `cat /tmp/stderr.log`;
-	if ($in ne $filter) {
-		is ($in, '', "$test");
-	}
-	unlink '/tmp/stderr.log';
+		# Save STDERR
+		#
+		open(STDERR, '>' ,"stderr.log");
 
-	#
-	#
-	unmock_Configd_tree_get_hash();
+		# RUN PROGRAM
+		#
+		update_rsyslog_config();
+		#
+		# END
 
-	my $diff = diff(\$cases{$test}, \read_test_results());
-	if ($diff ne q{}) {
-		print $diff;
-	}
-	ok ($diff eq q{}, "$test");
+		# Check if stderr is empty as well
+		#
+		my $filter = `cat "../../../fixture/syslog/good-rsyslog.d/${test}.stderrfilter" 2>/dev/null`;
+		my $in = `cat stderr.log`;
+		if ($in ne $filter) {
+			is ($in, '', "$test");
+		}
+
+		my $diff = diff(\$cases{$test}, \read_test_results());
+		if ($diff ne q{}) {
+			print $diff;
+		}
+		ok ($diff eq q{}, "$test");
+
+	};
 
 }
 

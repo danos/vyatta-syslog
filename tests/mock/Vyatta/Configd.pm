@@ -35,7 +35,7 @@ sub get_root {
 
 sub tree_get_hash {
 	my ($self, $path) = @_;
-	my $json = read_file("$::tmpdir/.tree_get_hash.tmp", { binmode => ':raw' });
+	my $json = read_file("tree_get_hash", { binmode => ':raw' });
 	my %config = %{ decode_json $json };
 	%config = get_root(\%config, $path);
 	return \%config;
@@ -47,7 +47,7 @@ sub tree_get_full_hash {
 
 sub node_exists {
 	my ($self, $db, $path) = @_;
-	my $json = read_file("$::tmpdir/.tree_get_hash.tmp", { binmode => ':raw' });
+	my $json = read_file("tree_get_hash", { binmode => ':raw' });
 	my %config = %{ decode_json $json };
 	if(get_root(\%config, $path)) {
 		return 1;
