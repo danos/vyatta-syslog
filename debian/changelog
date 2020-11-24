@@ -1,3 +1,16 @@
+vyatta-syslog (1.6) unstable; urgency=medium
+
+  * User RainerScript config for templates
+  * Use RainerScript format for global directives
+  * Create message properties for modification
+  * Fix perlcritic stern warnings
+  * gitignore: package name change and build files
+  * Fix Canonical order for UT override rules
+  * Order the entries hash
+  * Update test script to diff the expected and generated output
+
+ -- Nicholas Brown <nick.brown@att.com>  Tue, 24 Nov 2020 19:42:15 +0000
+
 vyatta-syslog (1.5) unstable; urgency=medium
 
   * Remove vyatta-system.tmpfile
