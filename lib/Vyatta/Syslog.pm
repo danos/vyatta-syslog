@@ -54,7 +54,7 @@ our @EXPORT_OK =
 
 # Values come from /usr/include/sys/syslog.h
 my %FACILITY_VALS = (
-    'kernl'    => ( 0 << 3 ),
+    'kern'     => ( 0 << 3 ),
     'user'     => ( 1 << 3 ),
     'mail'     => ( 2 << 3 ),
     'daemon'   => ( 3 << 3 ),
