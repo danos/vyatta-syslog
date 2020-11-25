@@ -10,7 +10,7 @@ use warnings;
 use File::Slurp qw(read_file);
 
 use lib "/opt/vyatta/share/perl5/";
-use Vyatta::Syslog;
+use Vyatta::Syslog qw(update_rsyslog_config $SOURCE_INTERFACE_FILE);
 
 sub usage {
     print <<EOF;
