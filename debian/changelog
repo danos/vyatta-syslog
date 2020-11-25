@@ -1,3 +1,9 @@
+vyatta-syslog (1.7) unstable; urgency=medium
+
+  * Import needed symbols from the Syslog module (Closes: VRVDR-53720)
+
+ -- Nicholas Brown <nick.brown@att.com>  Wed, 25 Nov 2020 17:43:12 +0000
+
 vyatta-syslog (1.6) unstable; urgency=medium
 
   * User RainerScript config for templates
