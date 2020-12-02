@@ -1,3 +1,16 @@
+vyatta-syslog (1.8) unstable; urgency=medium
+
+  [ Paul Carson ]
+  * Fix kern facility value
+
+  [ Nicholas Brown ]
+  * Specify the number of test before running them
+  * Make use of Test::TempDir::Tiny to keep generated on failure
+
+  [ Charles (Chas) Williams ]
+
+ -- Charles (Chas) Williams <ciwillia@vyatta.att-mail.com>  Wed, 02 Dec 2020 10:49:00 -0500
+
 vyatta-syslog (1.7) unstable; urgency=medium
 
   * Import needed symbols from the Syslog module (Closes: VRVDR-53720)
