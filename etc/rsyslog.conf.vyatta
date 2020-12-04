@@ -53,6 +53,28 @@ template(name="SystemdUnitTemplate" type="list" option.casesensitive="on") {
         constant(value="\n")
 }
 
+# Based on StdUsrMsgFmt with indicator injected
+template(name="StdUsrMsgIndicatorTemplate" type="list"  option.casesensitive="on") {
+        constant(value=" ")
+        property(name="syslogtag")
+        property(name="!indicator")
+        property(name="!MESSAGE")
+        constant(value="\n\r")
+}
+
+# Based on WallFmt with indicator injected
+template(name="WallIndicatorTemplate" type="list"  option.casesensitive="on") {
+        constant(value="\n\r\7Message from syslogd@")
+        property(name="HOSTNAME")
+        constant(value=" at ")
+        property(name="timegenerated")
+        constant(value=" ...\n\r ")
+        property(name="syslogtag")
+        property(name="!indicator")
+        property(name="!MESSAGE")
+        constant(value="\n\r")
+}
+
 ###########################
 #### GLOBAL DIRECTIVES ####
 ###########################
