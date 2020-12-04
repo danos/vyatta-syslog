@@ -1,0 +1,73 @@
+#!/usr/bin/python3
+# Copyright (c) 2020 AT&T Intellectual Property. All Rights Reserved.
+# SPDX-License-Identifier: GPL-2.0-only
+
+import argparse
+import random
+import syslog
+
+syslog_severities = [
+        # syslog.LOG_EMERG, # Best avoid using this as hosts get over excited
+        syslog.LOG_ALERT,
+        syslog.LOG_CRIT,
+        syslog.LOG_ERR,
+        syslog.LOG_WARNING,
+        syslog.LOG_NOTICE,
+        syslog.LOG_INFO,
+        syslog.LOG_DEBUG
+        ]
+
+syslog_facilities = [
+        syslog.LOG_KERN,
+        syslog.LOG_USER,
+        syslog.LOG_MAIL,
+        syslog.LOG_DAEMON,
+        syslog.LOG_AUTH,
+        syslog.LOG_LPR,
+        syslog.LOG_NEWS,
+        syslog.LOG_UUCP,
+        syslog.LOG_CRON,
+        syslog.LOG_SYSLOG,
+        syslog.LOG_LOCAL0,
+        syslog.LOG_LOCAL1,
+        syslog.LOG_LOCAL2,
+        syslog.LOG_LOCAL3,
+        syslog.LOG_LOCAL4,
+        syslog.LOG_LOCAL5,
+        syslog.LOG_LOCAL6,
+        syslog.LOG_LOCAL7,
+]
+
+words = [
+        "foo",
+        "bar",
+        "hello",
+        "there",
+        "shiny",
+        "ponies",
+        "unicorns",
+        "boring",
+        "interesting",
+        "pickme"
+]
+
+parser = argparse.ArgumentParser(description='Generate random syslog messages')
+parser.add_argument('--count', type=int, default=100)
+args = parser.parse_args()
+
+syslog.openlog('syslog_rnd_gen',
+               logoption=syslog.LOG_PID |
+               syslog.LOG_NDELAY |
+               syslog.LOG_NOWAIT)
+
+for x in range(args.count):
+    # 3 random words, with random priority
+    severity = random.choice(syslog_severities)
+    facility = random.choice(syslog_facilities)
+    syslog.syslog(severity | facility,
+                  'TESTMSG ' + str(x)
+                  + ' priority:' + str(severity | facility)
+                  + ' facility:' + str(facility // 8)
+                  + ' severity:' + str(severity)
+                  + ' '
+                  + ' '.join(random.choices(words, k=3)))
