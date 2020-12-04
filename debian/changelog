@@ -1,3 +1,13 @@
+vyatta-syslog (1.9) unstable; urgency=medium
+
+  [ Nicholas Brown ]
+  * Specify StateFile for imjournal module
+  * A useful syslog message generator for testing
+
+  [ Charles (Chas) Williams ]
+
+ -- Charles (Chas) Williams <ciwillia@vyatta.att-mail.com>  Fri, 04 Dec 2020 10:18:36 -0500
+
 vyatta-syslog (1.8) unstable; urgency=medium
 
   [ Paul Carson ]
