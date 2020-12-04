@@ -75,6 +75,15 @@ Description: vyatta-system-syslog-enhanced-v1 module
  Enhanced syslog is a match-action rule based approach to configuring
  syslog.
 
+Package: vyatta-system-syslog-enhanced-routing-instance-v1-yang
+Architecture: all
+Depends:
+ vyatta-syslog,
+ ${misc:Depends},
+ ${yang:Depends}
+Description: vyatta-system-syslog-enhanced-routing-instance-v1 module
+ VRF support for Enhanced Syslog.
+
 Package: vyatta-syslog
 Architecture: any
 Depends:
