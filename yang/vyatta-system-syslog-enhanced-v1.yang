@@ -1,0 +1,628 @@
+module vyatta-system-syslog-enhanced-v1 {
+	namespace "urn:vyatta.com:mgmt:vyatta-system-syslog-enhanced:1";
+	prefix vyatta-system-syslog-enhanced-v1;
+
+	import vyatta-interfaces-v1 {
+		prefix if;
+	}
+
+	import vyatta-system-v1 {
+		prefix system;
+	}
+
+	import vyatta-system-syslog-v1 {
+		prefix syslog;
+	}
+
+	import vyatta-types-v1 {
+		prefix types;
+	}
+	
+	import configd-v1 {
+		prefix configd;
+	}
+
+	organization "AT&T Inc.";
+	contact
+		"AT&T
+		 Postal: 208 S. Akard Street
+		         Dallas, TX 75202
+		 Web: www.att.com";
+
+	description
+		"Copyright (c) 2020 AT&T Intellectual Property
+		 All rights reserved.
+
+		 Redistribution and use in source and binary forms, with or without
+		 modification, are permitted provided that the following conditions
+		 are met:
+
+		 1. Redistributions of source code must retain the above copyright
+		    notice, this list of conditions and the following disclaimer.
+		 2. Redistributions in binary form must reproduce the above
+		    copyright notice, this list of conditions and the following
+		    disclaimer in the documentation and/or other materials provided
+		    with the distribution.
+		 3. Neither the name of the copyright holder nor the names of its
+		    contributors may be used to endorse or promote products derived
+		    from this software without specific prior written permission.
+
+		 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+		 'AS IS' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+		 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+		 FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+		 COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+		 INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+		 BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+		 LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+		 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+		 LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+		 ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+		 POSSIBILITY OF SUCH DAMAGE.
+
+		 SPDX-License-Identifier: BSD-3-Clause
+
+		 The enhanced syslog module enables a match-action rule based approach
+		 to configuring syslog.";
+
+	revision 2020-12-09 {
+		description "Initial revision.";
+	}
+
+	typedef flag {
+		type string {
+			pattern '[a-zA-Z0-9_-]+' {
+				error-message "Can only contain letters, numbers, " +
+					"underscore, and dash";
+			}
+		}
+	}
+
+	typedef flag-or-all {
+		type union {
+			type string {
+				pattern '\*';
+				configd:help "All messages";
+				configd:pattern-help "*";
+			}
+			type flag {
+				configd:help "Flag name";
+				configd:pattern-help "<flag-name>";
+			}
+		}
+	}
+
+	grouping msg-selector {
+		container msg {
+			description "Selectors that match based on the content of the " +
+				"msg part of the syslog message.";
+			configd:help "Selectors for msg part";
+			list posix-match {
+				description "Selectors that match the content of the msg " +
+					"part using a Posix Extended Regular Expression. The " +
+					"message will be selected if all of these expressions " +
+					"match.";
+				configd:help "Posix Extended Regular Expression";
+				key "regex";
+				leaf regex {
+					description "A Posix Extended Regular Expression that " +
+						"the msg part will be tested against.";
+					type string {
+						configd:help "Posix Extended Regular Expression";
+					}
+				}
+				leaf unless {
+					description "A Posix Extended Regular Expression used " +
+						"for a negative match. A message that matches the " +
+						"regex node will not be selected if it also matches " +
+						"this node.";
+					configd:help "Posix Extended Regular Expression to exclude";
+					type string;
+				}
+			}
+		}
+	}
+
+	grouping facility-selector {
+		leaf facility {
+			description "Selector that matches based on the syslog facility " +
+				"of the message.";
+			configd:help "Selector for syslog facility";
+			type syslog:facility-no-all;
+		}
+	}
+
+	grouping severity-selector {
+		container severity {
+			description "Selectors that match based on the syslog severity " +
+				"of the message.";
+			configd:help "Selectors for syslog severity";
+			must "count(*) <= 1" {
+				error-message "Only one of 'equal', 'at-least', and " +
+					"'at-most' can be configured";
+			}
+			leaf equals {
+				description "Selector that matches if the syslog severity " +
+					"of the message is exactly one of the configured values.";
+				configd:help "Exact match";
+				type syslog:level;
+			}
+			leaf at-least {
+				description "Selector that matches if the syslog severity of " +
+					"the message is at least the configured value. e.g. if " +
+					"the value is 'crit', messages at 'crit', 'alert', and " +
+					"'emerg' are matched.";
+				configd:help "Minimum severity";
+				type syslog:level;
+			}
+			leaf at-most {
+				description "Selector that matches if the syslog severity of " +
+					"the message is at most the configured value. e.g. if " +
+					"the value is 'notice', messages at 'notice', 'info', " +
+					"and 'debug' are matched.";
+				configd:help "Maximum severity";
+				type syslog:level;
+			}
+		}
+	}
+
+	grouping flag-selector {
+		leaf-list without-flag {
+			description "Selectors that match if a message does not have any " +
+				"of the given flags set.";
+			configd:help "Selectors for messages without flag";
+			type flag;
+		}
+		leaf-list with-flag {
+			description "Selectors that match if a message has all of the " +
+				"given flags set.";
+			configd:help "Selectors for messages with flag";
+			type flag;
+		}
+	}
+
+	grouping rate-limiter {
+		list rate-limit {
+			description "Rate limiter allows rate limiting of messages " +
+				"only messages satifying the flag are rate limited " +
+				"otherwise the rule is skipped.";
+			configd:help "Rate-limit messages";
+			must "burst or interval or select-every-nth" {
+				error-message "Must configure either burst and interval, or " +
+					"select-every-nth";
+			}
+			key flag;
+			max-elements 1;
+			leaf flag {
+				description "Rate limit a message if the flag is set. " +
+					"a flag value of '*' indicates all messages";
+				type flag-or-all;
+			}
+			leaf burst {
+
+				description "The burst is the number of messages that can be " +
+					"selected during the time interval.";
+				configd:help "Number of messages in time interval";
+				type uint32 {
+					range "1..max";
+				}
+				must "(../interval)" {
+					error-message "interval must be configured with burst";
+				}
+			}
+			leaf interval {
+				description "The time interval over which to select messages " +
+					"in seconds.";
+				configd:help "Time interval in seconds";
+				type uint16 {
+					range "1..max";
+				}
+				units seconds;
+				must "(../burst)" {
+					error-message "burst must be configured with interval";
+				}
+			}
+			leaf select-every-nth {
+				description "Only select every nth message.";
+				configd:help "Every nth message";
+				type uint32 {
+					range "2..max";
+				}
+				must "not(../burst or ../interval)" {
+					error-message "every nth message cannot be configured " +
+						"with burst or interval";
+				}
+			}
+		}
+	}
+
+	grouping actions {
+		leaf discard {
+			description "Discard the message. Processing for this message " +
+				"will stop.";
+			configd:help "Discard message";
+			type empty;
+		}
+		leaf set-facility {
+			description "Modify the facility of the message. The facility " +
+				"will be set to the configured value. The new facility will " +
+				"be used for matching further rules.";
+			configd:help "Set facility of message";
+			type syslog:facility-no-all;
+		}
+		leaf set-severity {
+			description "Modify the severity of the message. The severity " +
+				"will be set to the configured value. The new severity will " +
+				"be used for matching further rules.";
+			configd:help "Set severity of message";
+			type syslog:level;
+		}
+		leaf console {
+			description "Output the message to the system console.";
+			configd:help "Output to console";
+			type empty;
+		}
+		leaf-list user {
+			description "Output the message to the specified user's " +
+				"terminal. '*' will output to the terminals of all users.";
+			configd:help "Output to user's terminal";
+			type string {
+				pattern '\*|[a-zA-Z_][a-zA-Z0-9_-]*';
+			}
+		}
+		leaf-list file {
+			description "Output the message to the specified file.";
+			configd:help "Output to file";
+			type leafref {
+				path "../../../file/entry";
+			}
+		}
+		leaf-list host {
+			description "Forward the message to the specified remote host.";
+			configd:help "Forward to host";
+			type leafref {
+				path "../../../host/entry";
+			}
+		}
+
+		leaf-list clear-flag {
+			description "Clear a flag on the message.";
+			configd:help "Clear a flag";
+			type flag;
+		}
+
+		leaf-list set-flag {
+			description "Set a flag on the message that can be used in a " +
+				"selector in a later rule. This allows you to configure a " +
+				"rule that only matches messages without this flag.";
+			configd:help "Selector flag";
+			type flag;
+		}
+		
+		leaf set-indicator {
+			description "Specifies an indicator that will be added to " +
+				"selected messages. If no value is configured, messages will " +
+				"not carry an indicator.";
+			configd:help "Dampening indicator";
+			type string {
+				pattern '[a-zA-Z0-9\(\)\[\]_-]+:?' {
+					error-message "Can only contain letters, numbers, " +
+						"parentheses, brackets, underscore, and dash and " +
+						"optionally end with colon";
+				}
+			}
+		}
+	}
+
+	grouping syslog-rules {
+		list rule {
+			description "These rules are used to determine how each message " +
+				"passing through syslog is processed. Each rule can specify " +
+				"a number of selectors, and a list of actions to take on the " +
+				"message. The actions will be taken if all selectors in the " +
+				"rule match.";
+			configd:help "Message processing rules";
+			must "then or otherwise" {
+				error-message "A rule must have then or otherwise actions";
+			}
+			must "not(otherwise) or match or rate-limit" {
+				error-message "A match or rate-limit must be specified to " +
+					"use otherwise actions";
+			}
+			key rule-number;
+			leaf rule-number {
+				description "The rule number is used to determine the order " +
+					"rules are checked in, lowest first. Processing " +
+					"continues until a terminate action is encountered.";
+				type uint16 {
+					configd:help "Rule number";
+				}
+			}
+			leaf description {
+				description "Free-form text to describe what the purpose of " +
+					"the rule is. Intended to make understanding the " +
+					"configuration easier.";
+				configd:help "Rule description";
+				type string;
+			}
+			leaf disable {
+				description "Disable the rule so that messages will not be " +
+					"checked against it. This allows the rule to be kept in " +
+					"configuration without being active.";
+				configd:help "Disable rule";
+				type empty;
+			}
+			container match {
+				description "Selectors to match the message against. The " +
+					"message will be selected if all selectors match, and " +
+					"the 'then' action will be run. If not all selectors " +
+					"match, the 'otherwise' action will be run.";
+				configd:help "Selectors to match message";
+				uses msg-selector;
+				uses facility-selector;
+				uses severity-selector;
+				uses flag-selector;
+			}
+			container then {
+				description "Actions that will be taken if the rule matches. " +
+					"All of the selectors in the rule must match for the " +
+					"rule to match.";
+				configd:help "Actions on match";
+				uses actions;
+			}
+			container otherwise {
+				description "Actions that will be taken if the rule doesn't " +
+					"match.";
+				configd:help "Actions if rule doesn't match";
+				uses actions;
+			}
+			must "not(rate-limit and match)" {
+				error-message "Only one of rate-limit or match is allowed " +
+					"per rule";
+			}
+			uses rate-limiter;
+		}
+	}
+
+	grouping syslog-remote-tls {
+		container tls {
+			description "Set TLS encryption parameters for remote logging.";
+			configd:help "Enable TLS encryption for remote logging";
+			presence "A Syslog TLS configuration is enabled";
+			must "../protocol = 'tcp'" {
+				error-message "TCP required for TLS connections";
+			}
+			must "../../tls" {
+				error-message "Global TLS configuration must exist";
+			}
+ 			uses syslog:tls-cipher-suite;
+			container authentication {
+				description "Authentication parameters needed for TLS";
+				configd:help "Authentication parameters needed for TLS";
+				leaf mode {
+					description "Choose the x509 authentication mode";
+					configd:help "x509 authentication mode";
+					type enumeration {
+						enum "x509/fingerprint" {
+							description "In x509/fingerprint mode, both the " +
+								"client and server certificate must be " +
+								"signed by the same root CA.";
+							configd:help "Certificate fingerprint " +
+								"authentication";
+						}
+						enum "x509/name" {
+							description "Certificate validation and subject " +
+								"name authentication.";
+							configd:help "Certificate validation and subject " +
+								"name authentication";
+						}
+					}
+					mandatory true;
+				}
+				list peers {
+					configd:help "Peer related parameters";
+					description "Peer related parameters.";
+					max-elements 1;
+					key "peer";
+					leaf peer {
+						configd:help "Hostname of peer";
+						description "Hostname of peer.";
+						type string {
+							length 1..max;
+						}
+					}
+					leaf fingerprint {
+						configd:help "Accepted fingerprint (SHA1)";
+						description "Accepted fingerprint (SHA1).";
+						type string {
+							pattern 'SHA1(:[0-9a-fA-F][0-9a-fA-F]){20}';
+						}
+					}
+				}
+			}
+		}
+	}
+
+	grouping syslog-tls-ca {
+		list certificate-authority {
+			description "Name of Certificate Authority. This is used for " +
+				"description only";
+			configd:help "Name of Certificate Authority";
+			max-elements 1;
+			min-elements 1;
+			key "CA";
+			leaf CA {
+				type string;
+			}
+			leaf file {
+				configd:help "Path to CA file relative to /config/auth";
+				description "Path to CA file relative to /config/auth.";
+				type string {
+					length 1..max;
+				}
+				mandatory true;
+			}
+		}
+	}
+
+	grouping syslog-tls-local-certificate {
+		container local-certificate {
+				description "Local certificate location and parameters.";
+				configd:help "Local certificate parameters";
+				leaf certificate {
+					description "Path to local certificate file relative to " +
+						"/config/auth.";
+					configd:help "Path to local certificate file relative to " +
+						"/config/auth";
+					type string {
+						length 1..max;
+					}
+					mandatory true;
+				}
+				leaf key {
+					description "Path to local key file relative to " +
+						"/config/auth.";
+					configd:help "Path to local key file relative to " +
+						"/config/auth";
+					type string {
+						length 1..max;
+					}
+					mandatory true;
+				}
+			}
+	}
+
+	grouping syslog-local {
+		list file {
+			configd:help "Logging to a file";
+			key "entry";
+			leaf entry {
+				description "Name of the file configuration entry.";
+				configd:help "Logging to a file";
+				type string;
+			}
+			leaf filename {
+				type string {
+					pattern '[-a-zA-Z0-9_.]+';
+				}
+				configd:help "Name of the file";
+				description "Name of the file to be used as a logging " +
+					"destination.";
+				mandatory true;
+			}
+			uses syslog:archive;
+			description "Configures a file as the destination for logging " +
+				"entries. The file is created in /var/log/user. Log entries " +
+				"that match the specified facility and level, or regular " +
+				"expressions, will be saved to the file.";
+		}
+	}
+
+	grouping syslog-remote {
+		list host {
+			configd:help "Logging to a remote host";
+			key "entry";
+			leaf entry {
+				description "Name of the host configuration entry.";
+				configd:help "Logging to a remote host";
+				type string;
+			}
+			leaf hostname {
+				description "Hostname or IP address of the " +
+					"remote logging host.";
+				configd:help "Hostname or IP address";
+				type types:host;
+				mandatory true;
+			}
+			leaf protocol {
+				configd:help "Transport protocol";
+				description "Transport protocol";
+				type enumeration {
+					enum "udp" {
+						configd:help "User Datagram Protocol (UDP)";
+						description "User Datagram Protocol (UDP)";
+					}
+					enum "tcp" {
+						configd:help "Transmission Control Protocol (TCP)";
+						description "Transmission Control Protocol (TCP)";
+					}
+				}
+				default "udp";
+			}
+			leaf port {
+				description "Destination port number on " +
+					"remote logging host.";
+				configd:help "Port number";
+				type types:port;
+				default 514;
+			}
+			uses syslog-remote-tls;
+			uses if:source-interface-leaf {
+				refine source-interface {
+					must "not(../protocol) or (../protocol = 'udp')" {
+						error-message "Source-interface is only supported " +
+							"over UDP.";
+					}
+					must "../*[local-name(.) = 'routing-instance'] or " +
+							"not(/*[local-name(.) = 'routing']" +
+							"/*[local-name(.) = 'routing-instance']" +
+							"/*[local-name(.) = 'interface']" +
+							"/*[local-name(.) = 'name'][. = current()])" {
+						error-message "Source interface does not match " +
+							"routing instance";
+					}
+					description
+						"The interface used to obtain the source IP address " +
+						"for packets sent to the remote host.
+
+						If the interface has multiple IP addresses one will " +
+						"be chosen by the system.
+
+						If the interface has no suitable IP addresses then " +
+						"the system will not connect to the remote host.";
+					configd:help "Source interface for connecting to remote " +
+						"hosts";
+				}
+			}
+			description "Configures a remote host as the destination for log " +
+				"entries. Log entries that match the specified facility and " +
+				"level, or regular expressions, will be sent to the remote " +
+				"host.";
+		}
+	}
+
+	augment /system:system {
+		container syslog-enhanced {
+			presence "Enhanced syslog configuration";
+			description "The enhanced syslog feature allows a more advanced " +
+				"syslog configuration by creating a list of match-action " +
+				"rules.";
+			configd:help "Enhanced syslog configuration";
+			configd:end "/opt/vyatta/share/tmplscripts/system/syslog/configd_end.sh";
+			configd:priority "400";
+
+			must not(../syslog:syslog) {
+				error-message "Syslog and syslog-enhanced can't both be " +
+					"configured";
+			}
+			must "not(/*[local-name(.) = 'routing']" +
+					"/*[local-name(.) = 'routing-instance']" +
+					"/*[local-name(.) = 'system']" +
+					"/*[local-name(.) = 'syslog'])" {
+				error-message "Syslog enhanced can't be configured with " +
+					"syslog in a routing instance";
+			}
+			uses syslog-rules;
+			uses syslog-local;
+			uses syslog-remote;
+			container tls {
+				presence "TLS configuration is enabled";
+				description "Global TLS parameters for remote logging. These " +
+					"parameters are used for all syslog hosts.";
+				configd:help "Global syslog TLS parameters";
+				uses syslog-tls-ca;
+				uses syslog-tls-local-certificate;
+			}
+		}
+	}
+}

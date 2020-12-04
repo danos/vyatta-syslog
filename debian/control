@@ -65,6 +65,16 @@ Replaces: vyatta-cfg-system (<< 1.6.0)
 Description: vyatta-op-generate-syslog-v1 module
  Syslog self-signed x509 certificate generator
 
+Package: vyatta-system-syslog-enhanced-v1-yang
+Architecture: all
+Depends:
+ vyatta-syslog,
+ ${misc:Depends},
+ ${yang:Depends}
+Description: vyatta-system-syslog-enhanced-v1 module
+ Enhanced syslog is a match-action rule based approach to configuring
+ syslog.
+
 Package: vyatta-syslog
 Architecture: any
 Depends:
