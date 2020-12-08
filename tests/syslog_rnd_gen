@@ -5,6 +5,7 @@
 import argparse
 import random
 import syslog
+from time import sleep
 
 syslog_severities = [
         # syslog.LOG_EMERG, # Best avoid using this as hosts get over excited
@@ -51,8 +52,28 @@ words = [
         "pickme"
 ]
 
+
+def check_positive_int(value):
+    ivalue = int(value)
+    if ivalue <= 0:
+        raise argparse.ArgumentTypeError("%s is an invalid positive int value"
+                                         % value)
+    return ivalue
+
+
+def check_positive_float(value):
+    ivalue = float(value)
+    if ivalue <= 0:
+        raise argparse.ArgumentTypeError("%s is an invalid positive float value"
+                                         % value)
+    return ivalue
+
+
 parser = argparse.ArgumentParser(description='Generate random syslog messages')
-parser.add_argument('--count', type=int, default=100)
+parser.add_argument('--count', type=check_positive_int, default=100,
+                    help='total number of messages to generate')
+parser.add_argument('--burst', type=check_positive_float, default=100,
+                    help='number of messages to generate per second')
 args = parser.parse_args()
 
 syslog.openlog('syslog_rnd_gen',
@@ -61,6 +82,7 @@ syslog.openlog('syslog_rnd_gen',
                syslog.LOG_NOWAIT)
 
 for x in range(args.count):
+    sleep(1 / args.burst)
     # 3 random words, with random priority
     severity = random.choice(syslog_severities)
     facility = random.choice(syslog_facilities)
