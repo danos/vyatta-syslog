@@ -1,0 +1,22 @@
+set $.tnow = $$UPTIME;
+set $!severity = $syslogseverity;
+set $!facility = $syslogfacility;
+ruleset(name="setpri") {
+set $!priority = ($!facility * 8) + $!severity;
+}
+
+if (( re_match($msg, "foo") )) then {
+ set $!facility = 22;
+call setpri
+} else {
+continue
+}
+
+
+if (( re_match($msg, "bar") )) then {
+ set $!severity = 3;
+call setpri
+} else {
+continue
+}
+

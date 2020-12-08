@@ -1,0 +1,38 @@
+{
+   "system" : {
+      "syslog-enhanced" : {
+         "rule" : [
+            {
+               "rule-number" : 100,
+               "match" : {
+                  "msg" : {
+                     "posix-match" : [
+                        {
+                           "regex" : "foo"
+                        }
+                     ]
+                  }
+               },
+               "then" : {
+                  "set-facility" : "local6"
+               }
+            },
+            {
+               "then" : {
+                  "set-severity" : "err"
+               },
+               "match" : {
+                  "msg" : {
+                     "posix-match" : [
+                        {
+                           "regex" : "bar"
+                        }
+                     ]
+                  }
+               },
+               "rule-number" : 200
+            }
+         ]
+      }
+   }
+}
