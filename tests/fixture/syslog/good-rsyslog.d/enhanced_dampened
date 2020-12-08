@@ -1,0 +1,62 @@
+set $.tnow = $$UPTIME;
+set $!severity = $syslogseverity;
+set $!facility = $syslogfacility;
+ruleset(name="setpri") {
+set $!priority = ($!facility * 8) + $!severity;
+}
+
+$outchannel file_mylog,/var/log/user/mylog,261120,/usr/sbin/logrotate /opt/vyatta/etc/logrotate/file_mylog
+set $.send.file.mylog = 1;
+
+ruleset(name="fileaction_mylog") {
+    if ($.send.file.mylog == 1) then {
+        :omfile:$file_mylog
+        set $.send.file.mylog = 0;
+    }
+}
+
+if (( re_match($msg, "foo") )) then {
+ set $.flag.summarize = 1;
+} else {
+continue
+}
+
+
+if ($.flag.summarize == 1) then {
+if ($/count110 >= 100) then {
+    set $/count110 = 0;
+}
+if ($/count110 == 0) then {
+    set $/count110 = $/count110 + 1;
+    set $!indicator = "SUMMARIZED";
+} else {
+    set $/count110 = $/count110 + 1;
+    stop
+}
+
+}
+
+
+if (( re_match($msg, "bar") )) then {
+ set $.flag.dampen = 1;
+} else {
+continue
+}
+
+
+if ($.flag.dampen == 1) then {
+if (($.tnow - $/tstart210) >= 5) then {
+    set $/tstart210 = $.tnow;
+    set $/burstcount210 = 0;
+}
+if ($/burstcount210 >= 100 ) then {
+    stop
+} else {
+    set $/burstcount210 = $/burstcount210 + 1;
+    set $!indicator = "DAMPENED";
+}
+
+}
+
+
+call fileaction_mylog

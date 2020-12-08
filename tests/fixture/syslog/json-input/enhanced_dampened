@@ -1,0 +1,91 @@
+{
+   "system" : {
+      "syslog-enhanced" : {
+         "file" : [
+            {
+               "entry" : "mylog",
+               "filename" : "mylog",
+               "archive" : {
+                  "size" : 250,
+                  "files" : 5
+               }
+            }
+         ],
+         "rule" : [
+            {
+               "rule-number" : 100,
+               "match" : {
+                  "msg" : {
+                     "posix-match" : [
+                        {
+                           "regex" : "foo"
+                        }
+                     ]
+                  }
+               },
+               "then" : {
+                  "set-flag" : [
+                     "summarize"
+                  ]
+               }
+            },
+            {
+               "rule-number" : 110,
+               "rate-limit" : [
+                  {
+                     "flag" : "summarize",
+                     "select-every-nth" : 100
+                  }
+               ],
+               "then" : {
+                  "set-indicator" : "SUMMARIZED"
+               },
+               "otherwise" : {
+                  "discard" : null
+               }
+            },
+            {
+               "match" : {
+                  "msg" : {
+                     "posix-match" : [
+                        {
+                           "regex" : "bar"
+                        }
+                     ]
+                  }
+               },
+               "rule-number" : 200,
+               "then" : {
+                  "set-flag" : [
+                     "dampen"
+                  ]
+               }
+            },
+            {
+               "rule-number" : 210,
+               "otherwise" : {
+                  "discard" : null
+               },
+               "then" : {
+                  "set-indicator" : "DAMPENED"
+               },
+               "rate-limit" : [
+                  {
+                     "interval" : 5,
+                     "burst" : 100,
+                     "flag" : "dampen"
+                  }
+               ]
+            },
+            {
+               "then" : {
+                  "file" : [
+                     "mylog"
+                  ]
+               },
+               "rule-number" : 1000
+            }
+         ]
+      }
+   }
+}
