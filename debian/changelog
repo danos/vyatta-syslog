@@ -1,3 +1,23 @@
+vyatta-syslog (1.10) unstable; urgency=medium
+
+  [ Paul Carson ]
+  * Inject indicator into SystemdUnit templates
+
+  [ Nicholas Brown ]
+  * Add custom Wall and User templates with indicator injected
+
+  [ Paul Carson ]
+  * Support syslog-enhanced configuration
+
+  [ Nicholas Brown ]
+  * Add enhanced model dampened Unit Test
+  * Add an enhanced manipulation Unit Test
+  * Basic rate control for syslog_rnd_gen
+
+  [ Charles (Chas) Williams ]
+
+ -- Charles (Chas) Williams <ciwillia@vyatta.att-mail.com>  Fri, 11 Dec 2020 11:04:21 -0500
+
 vyatta-syslog (1.9) unstable; urgency=medium
 
   [ Nicholas Brown ]
