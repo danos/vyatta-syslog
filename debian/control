@@ -23,7 +23,6 @@ Build-Depends:
  libtest-tempdir-tiny-perl,
  libtext-diff-perl,
  libtie-ixhash-perl,
- libvyatta-cfg1,
  logrotate,
  shunit2,
 Standards-Version: 3.9.6
