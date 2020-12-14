@@ -1,3 +1,11 @@
+vyatta-syslog (1.11) unstable; urgency=medium
+
+  [ James Wheatley ]
+  * Add vyatta-system-syslog-enhanced-v1 YANG module
+  * Add enhanced syslog VRF module
+
+ -- Nicholas Brown <nick.brown@att.com>  Mon, 14 Dec 2020 09:59:00 +0000
+
 vyatta-syslog (1.10) unstable; urgency=medium
 
   [ Paul Carson ]
