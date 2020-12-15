@@ -1,0 +1,152 @@
+{
+   "system" : {
+      "syslog-enhanced" : {
+         "host" : [
+            {
+               "protocol" : "udp",
+               "hostname" : "1.2.3.4",
+               "source-interface" : "lo",
+               "port" : 1551,
+               "entry" : "myserver"
+            }
+         ],
+         "input" : {
+            "journal" : {
+               "rate-limit" : {
+                  "burst" : 50000,
+                  "interval" : 600
+               }
+            }
+         },
+         "file" : [
+            {
+               "archive" : {
+                  "files" : 1000,
+                  "size" : 10
+               },
+               "filename" : "csbh",
+               "entry" : "csbh"
+            },
+            {
+               "entry" : "errors",
+               "filename" : "error.log",
+               "archive" : {
+                  "size" : 250,
+                  "files" : 5
+               }
+            },
+            {
+               "archive" : {
+                  "files" : 5,
+                  "size" : 250
+               },
+               "entry" : "warnings",
+               "filename" : "warning.log"
+            }
+         ],
+         "rule" : [
+            {
+               "match" : {
+                  "msg" : {
+                     "posix-match" : [
+                        {
+                           "regex" : "(BUS FATAL ERROR)|(MOD SFF)"
+                        }
+                     ]
+                  }
+               },
+               "then" : {
+                  "discard" : null
+               },
+               "rule-number" : 100
+            },
+            {
+               "then" : {
+                  "discard" : null
+               },
+               "match" : {
+                  "msg" : {
+                     "posix-match" : [
+                        {
+                           "regex" : "pam_|(transition to running)"
+                        }
+                     ]
+                  }
+               },
+               "rule-number" : 101
+            },
+            {
+               "rule-number" : 200,
+               "match" : {
+                  "facility" : "local6",
+                  "severity" : {
+                     "at-least" : "warning"
+                  }
+               },
+               "then" : {
+                  "file" : [
+                     "warnings"
+                  ]
+               }
+            },
+            {
+               "match" : {
+                  "severity" : {
+                     "at-least" : "warning"
+                  },
+                  "facility" : "local7"
+               },
+               "then" : {
+                  "file" : [
+                     "warnings"
+                  ]
+               },
+               "rule-number" : 300
+            },
+            {
+               "match" : {
+                  "severity" : {
+                     "at-least" : "err"
+                  }
+               },
+               "then" : {
+                  "file" : [
+                     "errors"
+                  ]
+               },
+               "rule-number" : 400
+            },
+            {
+               "rule-number" : 500,
+               "match" : {
+                  "severity" : {
+                     "at-least" : "crit"
+                  }
+               },
+               "then" : {
+                  "host" : [
+                     "myserver"
+                  ]
+               }
+            },
+            {
+               "rule-number" : 600,
+               "then" : {
+                  "file" : [
+                     "csbh"
+                  ]
+               },
+               "match" : {
+                  "msg" : {
+                     "posix-match" : [
+                        {
+                           "regex" : "fal_plugin|sfp|BGP|((OSPF|OAM)-[45])|((Link|admin) (up|down))"
+                        }
+                     ]
+                  }
+               }
+            }
+         ]
+      }
+   }
+}

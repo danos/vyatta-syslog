@@ -1,0 +1,100 @@
+set $.tnow = $$UPTIME;
+set $!severity = $syslogseverity;
+set $!facility = $syslogfacility;
+ruleset(name="setpri") {
+set $!priority = ($!facility * 8) + $!severity;
+}
+$imjournalRateLimitInterval 600
+$imjournalRateLimitBurst 50000
+
+$outchannel file_csbh,/var/log/user/csbh,15360,/usr/sbin/logrotate /opt/vyatta/etc/logrotate/file_csbh
+set $.send.file.csbh = 1;
+
+ruleset(name="fileaction_csbh") {
+    if ($.send.file.csbh == 1) then {
+        :omfile:$file_csbh
+        set $.send.file.csbh = 0;
+    }
+}
+
+
+$outchannel file_errors,/var/log/user/error.log,261120,/usr/sbin/logrotate /opt/vyatta/etc/logrotate/file_error.log
+set $.send.file.errors = 1;
+
+ruleset(name="fileaction_errors") {
+    if ($.send.file.errors == 1) then {
+        :omfile:$file_errors
+        set $.send.file.errors = 0;
+    }
+}
+
+
+$outchannel file_warnings,/var/log/user/warning.log,261120,/usr/sbin/logrotate /opt/vyatta/etc/logrotate/file_warning.log
+set $.send.file.warnings = 1;
+
+ruleset(name="fileaction_warnings") {
+    if ($.send.file.warnings == 1) then {
+        :omfile:$file_warnings
+        set $.send.file.warnings = 0;
+    }
+}
+
+
+set $.send.host.myserver = 1;
+
+ruleset(name="hostaction_myserver") {
+    if ($.send.host.myserver == 1) then {
+         action( Type="omfwd" Target="1.2.3.4" Protocol="udp" Port="1551" Template="SystemdUnitTemplate" )
+
+        set $.send.host.myserver = 0;
+    }
+}
+
+if (( re_match($msg, "(BUS FATAL ERROR)|(MOD SFF)") )) then {
+ stop
+} else {
+continue
+}
+
+
+if (( re_match($msg, "pam_|(transition to running)") )) then {
+ stop
+} else {
+continue
+}
+
+
+if (($!facility == 22) and ($!severity <= 4)) then {
+ call fileaction_warnings
+} else {
+continue
+}
+
+
+if (($!facility == 23) and ($!severity <= 4)) then {
+ call fileaction_warnings
+} else {
+continue
+}
+
+
+if (($!severity <= 3)) then {
+ call fileaction_errors
+} else {
+continue
+}
+
+
+if (($!severity <= 2)) then {
+ call hostaction_myserver
+} else {
+continue
+}
+
+
+if (( re_match($msg, "fal_plugin|sfp|BGP|((OSPF|OAM)-[45])|((Link|admin) (up|down))") )) then {
+ call fileaction_csbh
+} else {
+continue
+}
+
