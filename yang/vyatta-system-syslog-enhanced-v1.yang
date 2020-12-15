@@ -65,7 +65,7 @@ module vyatta-system-syslog-enhanced-v1 {
 		 The enhanced syslog module enables a match-action rule based approach
 		 to configuring syslog.";
 
-	revision 2020-12-09 {
+	revision 2020-12-15 {
 		description "Initial revision.";
 	}
 
@@ -320,7 +320,12 @@ module vyatta-system-syslog-enhanced-v1 {
 				"passing through syslog is processed. Each rule can specify " +
 				"a number of selectors, and a list of actions to take on the " +
 				"message. The actions will be taken if all selectors in the " +
-				"rule match.";
+				"rule match. " +
+				"The actions within a rule take effect in the following order:\n" +
+				"1: set-facility, set-severity, set-indicator, set-flag.\n" +
+				"2: clear-flag.\n" +
+				"3: console, user, file, host.\n" +
+				"4: discard.";
 			configd:help "Message processing rules";
 			must "then or otherwise" {
 				error-message "A rule must have then or otherwise actions";
