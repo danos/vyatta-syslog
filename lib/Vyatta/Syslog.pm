@@ -480,6 +480,19 @@ END
     return $cert_locations;
 }
 
+sub build_journal_input_rate_limit {
+    my ($config) = @_;
+    my $out = "";
+
+    get_rate_limit_parms($config->{'system'}->{'syslog-enhanced'}->{'input'}->{'journal'});
+
+    open my $fh, '>>', \$out;
+    print_rate_limit_settings($fh);
+    close $fh;
+
+    return $out;
+}
+
 sub build_rules {
     my ($config) = @_;
     my $out = "";
@@ -1434,7 +1447,9 @@ sub update_rsyslog_config {
     my $certs = build_tls_certificates($econfig);
     my $files = build_targets($econfig);
     my $rls   = build_rules($econfig);
+    my $journal_rate_limit = build_journal_input_rate_limit($econfig);
 
+    push @actions, $journal_rate_limit;
     push @actions, $certs;
     push @actions, $files;
     push @actions, $rls;
