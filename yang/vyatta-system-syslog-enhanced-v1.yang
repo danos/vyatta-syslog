@@ -65,7 +65,7 @@ module vyatta-system-syslog-enhanced-v1 {
 		 The enhanced syslog module enables a match-action rule based approach
 		 to configuring syslog.";
 
-	revision 2020-12-15 {
+	revision 2020-12-16 {
 		description "Initial revision.";
 	}
 
@@ -596,6 +596,18 @@ module vyatta-system-syslog-enhanced-v1 {
 		}
 	}
 
+	grouping syslog-input-journal {
+		container input {
+			description "Source of messages for syslog processing.";
+			configd:help "Source of messages for syslog processing";
+			container journal {
+				description "System Journal source of messages.";
+				configd:help "System Journal source of messages";
+				uses syslog:syslog-rate-limit;
+			}
+		}
+	}
+
 	augment /system:system {
 		container syslog-enhanced {
 			presence "Enhanced syslog configuration";
@@ -617,6 +629,7 @@ module vyatta-system-syslog-enhanced-v1 {
 				error-message "Syslog enhanced can't be configured with " +
 					"syslog in a routing instance";
 			}
+			uses syslog-input-journal;
 			uses syslog-rules;
 			uses syslog-local;
 			uses syslog-remote;
