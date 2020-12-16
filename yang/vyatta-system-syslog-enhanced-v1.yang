@@ -103,6 +103,7 @@ module vyatta-system-syslog-enhanced-v1 {
 					"message will be selected if all of these expressions " +
 					"match.";
 				configd:help "Posix Extended Regular Expression";
+				max-elements 1;
 				key "regex";
 				leaf regex {
 					description "A Posix Extended Regular Expression that " +

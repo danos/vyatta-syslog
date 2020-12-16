@@ -255,7 +255,7 @@ sub build_regexes {
         push @reg, $ocfg;
     }
 
-    $out = join ' or ', @reg;
+    $out = join ' and ', @reg;
 
     $out = '(' . $out . ')' if ( $out ne "" );
 
