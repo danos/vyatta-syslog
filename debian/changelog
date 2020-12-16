@@ -1,3 +1,11 @@
+vyatta-syslog (1.12) unstable; urgency=medium
+
+  * Describe order rule actions take effect in YANG
+  * YANG: data-model for journal input rate-limiting
+  * journal input rate-limiting for enhanced data-model
+
+ -- Nicholas Brown <nick.brown@att.com>  Wed, 16 Dec 2020 14:53:25 +0000
+
 vyatta-syslog (1.11) unstable; urgency=medium
 
   [ James Wheatley ]
