@@ -1,3 +1,13 @@
+vyatta-syslog (1.13) unstable; urgency=medium
+
+  [ Nicholas Brown ]
+  * Only one posix-match selector is allowed
+  * Add a simple real world example test config
+
+  [ Charles (Chas) Williams ]
+
+ -- Charles (Chas) Williams <ciwillia@vyatta.att-mail.com>  Fri, 18 Dec 2020 06:12:52 -0500
+
 vyatta-syslog (1.12) unstable; urgency=medium
 
   * Describe order rule actions take effect in YANG
