@@ -632,7 +632,7 @@ set \$.send.console = 1;
 
 ruleset(name="consoleaction") {
     if (\$.send.console == 1) then {
-	action(type="omfwd" Target="/dev/console" Protocol="udp" Port="514" Template="SystemdUnitTemplate")
+	action(type="omfile" file="/dev/console" Template="StdUsrMsgIndicatorTemplate")
         set \$.send.console = 0;
     }
 }
