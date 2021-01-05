@@ -1,3 +1,10 @@
+vyatta-syslog (1.15) unstable; urgency=medium
+
+  [ Nicholas Brown ]
+  * syslog-enhanced: console should use omfile
+
+ -- Charles (Chas) Williams <ciwillia@vyatta.att-mail.com>  Tue, 05 Jan 2021 11:35:13 -0500
+
 vyatta-syslog (1.14) unstable; urgency=medium
 
   [ Duncan Eastoe ]
