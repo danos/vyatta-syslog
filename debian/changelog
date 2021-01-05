@@ -1,3 +1,10 @@
+vyatta-syslog (1.14) unstable; urgency=medium
+
+  [ Duncan Eastoe ]
+  * debian: remove libvyatta-cfg1 build dependency
+
+ -- Nicholas Brown <nick.brown@att.com>  Tue, 05 Jan 2021 10:00:12 +0000
+
 vyatta-syslog (1.13) unstable; urgency=medium
 
   [ Nicholas Brown ]
