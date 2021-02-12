@@ -30,7 +30,7 @@ module vyatta-system-syslog-enhanced-v1 {
 		 Web: www.att.com";
 
 	description
-		"Copyright (c) 2020 AT&T Intellectual Property
+		"Copyright (c) 2020-2021 AT&T Intellectual Property
 		 All rights reserved.
 
 		 Redistribution and use in source and binary forms, with or without
@@ -65,7 +65,7 @@ module vyatta-system-syslog-enhanced-v1 {
 		 The enhanced syslog module enables a match-action rule based approach
 		 to configuring syslog.";
 
-	revision 2020-12-16 {
+	revision 2021-02-12 {
 		description "Initial revision.";
 	}
 
@@ -321,7 +321,7 @@ module vyatta-system-syslog-enhanced-v1 {
 				"passing through syslog is processed. Each rule can specify " +
 				"a number of selectors, and a list of actions to take on the " +
 				"message. The actions will be taken if all selectors in the " +
-				"rule match. " +
+				"rule match. With no selectors the rule always matches." +
 				"The actions within a rule take effect in the following order:\n" +
 				"1: set-facility, set-severity, set-indicator, set-flag.\n" +
 				"2: clear-flag.\n" +
@@ -372,8 +372,8 @@ module vyatta-system-syslog-enhanced-v1 {
 			container then {
 				description "Actions that will be taken if the rule matches. " +
 					"All of the selectors in the rule must match for the " +
-					"rule to match.";
-				configd:help "Actions on match";
+					"rule to match. With no selectors the rule always matches.";
+				configd:help "Actions to perform";
 				uses actions;
 			}
 			container otherwise {
