@@ -1,3 +1,9 @@
+vyatta-syslog (1.16) unstable; urgency=medium
+
+  * Clarify no match rule action (Closes: VRVDR-54405)
+
+ -- Nicholas Brown <nick.brown@att.com>  Mon, 15 Feb 2021 10:16:35 +0000
+
 vyatta-syslog (1.15) unstable; urgency=medium
 
   [ Nicholas Brown ]
