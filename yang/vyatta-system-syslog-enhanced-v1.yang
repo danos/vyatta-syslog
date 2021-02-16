@@ -600,6 +600,37 @@ module vyatta-system-syslog-enhanced-v1 {
 		}
 	}
 
+	grouping syslog-rate-limit {
+		container rate-limit {
+			description "Configures the maximum burst size (in number of log entries)
+				     allowed within the interval specified. Log entries will be 
+				     suppressed if the number of log entries exceeds the
+				     burst value within the specified interval.";
+			configd:help "Enable log rate limiting";
+			leaf interval {
+				type types:time-interval-seconds {
+					range "1..max";
+				}
+				configd:help "Interval in seconds";
+				default "600";
+				description "Specifies the rate limit interval in seconds. 
+					     If the number of log entries exceeds the burst
+					     value within this interval logging will be
+					     suppressed.";
+			}
+			leaf burst {
+				type uint32 {
+					configd:help "Number of log entries in interval";
+				}
+				configd:help "Number of log entries in interval";
+				default "20000";
+				description "Specifies the maximum number of log entries
+					     allowed within the specified interval before
+					     logs are suppressed";
+			}
+		}
+	}
+
 	grouping syslog-input-journal {
 		container input {
 			description "Source of messages for syslog processing.";
@@ -607,7 +638,7 @@ module vyatta-system-syslog-enhanced-v1 {
 			container journal {
 				description "System Journal source of messages.";
 				configd:help "System Journal source of messages";
-				uses syslog:syslog-rate-limit;
+				uses syslog-rate-limit;
 			}
 		}
 	}
