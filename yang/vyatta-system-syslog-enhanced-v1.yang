@@ -65,7 +65,7 @@ module vyatta-system-syslog-enhanced-v1 {
 		 The enhanced syslog module enables a match-action rule based approach
 		 to configuring syslog.";
 
-	revision 2021-02-12 {
+	revision 2021-02-16 {
 		description "Initial revision.";
 	}
 
@@ -301,10 +301,13 @@ module vyatta-system-syslog-enhanced-v1 {
 		}
 		
 		leaf set-indicator {
-			description "Specifies an indicator that will be added to " +
-				"selected messages. If no value is configured, messages will " +
-				"not carry an indicator.";
-			configd:help "Dampening indicator";
+			description "Specifies an indicator that will be prepended to " +
+				"selected messages on output. The indicator " +
+				"does not modify the original msg part used for rule matching." +
+				"A message has only a single indicator associated with it, with " +
+				"the latest set before an output action being used." +
+				"If no value is configured, messages will not carry an indicator.";
+			configd:help "Message indicator";
 			type string {
 				pattern '[a-zA-Z0-9\(\)\[\]_-]+:?' {
 					error-message "Can only contain letters, numbers, " +
