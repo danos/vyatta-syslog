@@ -1,3 +1,12 @@
+vyatta-syslog (1.17) unstable; urgency=medium
+
+  * Clarify that set-indicator does effect msg matching (Closes:
+    VRVDR-54438)
+  * Add required input journal rate-limiting defaults (Closes:
+    VRVDR-54448)
+
+ -- Nicholas Brown <nick.brown@att.com>  Wed, 17 Feb 2021 14:10:50 +0000
+
 vyatta-syslog (1.16) unstable; urgency=medium
 
   * Clarify no match rule action (Closes: VRVDR-54405)
