@@ -3,7 +3,7 @@
 
 # **** License ****
 #
-# Copyright (c) 2017-2020 AT&T Intellectual Property.
+# Copyright (c) 2017-2021 AT&T Intellectual Property.
 #    All Rights Reserved.
 # Copyright (c) 2014-2017, Brocade Communications Systems, Inc.
 #    All Rights Reserved.
@@ -685,6 +685,25 @@ sub read_config {
     return;
 }
 
+sub print_file {
+    my ( $fh, $target ) = @_;
+
+    # Verify there is something to print
+    return
+      unless ( $entries{$target}{selector} || $entries{$target}{msgregex} );
+
+    if ( $entries{$target}{selector} ) {
+        print $fh join( ';', @{ $entries{$target}{selector} } ),
+          " :omfile:$target\n";
+    }
+    if ( $entries{$target}{msgregex} ) {
+        foreach my $regex ( @{ $entries{$target}{msgregex} } ) {
+            print $fh ":msg, ereregex, \"${regex}\" :omfile:$target\n";
+        }
+    }
+    return;
+}
+
 sub print_outchannel {
     my ( $fh, $channel, $target, $size ) = @_;
 
@@ -1328,6 +1347,8 @@ sub generate_instance_actions {
             $files = get_target_param( $target, 'files' );
             print_outchannel( $out, 'file_' . $file, $target, $size );
             write_log_rotation_file( $file, $files, $size );
+        } elsif ( $target =~ m:^/dev/console: ) {
+            print_file( $out, $target );
         } else {
             if ( $entries{$target}{selector} ) {
                 my $action = get_action( $target, $config, $vrf );
