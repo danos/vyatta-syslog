@@ -1,3 +1,9 @@
+vyatta-syslog (1.18) unstable; urgency=medium
+
+  * syslog: console should use omfile
+
+ -- Nicholas Brown <nick.brown@att.com>  Wed, 24 Mar 2021 14:53:42 +0000
+
 vyatta-syslog (1.17) unstable; urgency=medium
 
   * Clarify that set-indicator does effect msg matching (Closes:
