@@ -839,18 +839,6 @@ sub get_node {
 }
 
 #
-# Process the global logging destination configuration
-#
-sub get_global_logging_config {
-    my ($config) = @_;
-
-    my $globalcfg = get_node( $config, 'global' );
-    read_config( $globalcfg, $MESSAGES )
-      if ( defined($globalcfg) );
-    return;
-}
-
-#
 # process console logging destination configuration
 #
 sub get_console_logging_config {
@@ -1423,7 +1411,6 @@ sub update_rsyslog_config {
         next unless defined $pconfig;
         $pconfig->{'static_hosts'} = $static_hosts if defined $static_hosts;
 
-        get_global_logging_config($pconfig);
         get_console_logging_config($pconfig);
         get_file_logging_config($pconfig);
         get_user_logging_config($pconfig);
