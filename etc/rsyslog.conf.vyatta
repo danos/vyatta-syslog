@@ -79,6 +79,10 @@ template(name="WallIndicatorTemplate" type="list"  option.casesensitive="on") {
 #### GLOBAL DIRECTIVES ####
 ###########################
 
+# Rate-limit internal messages
+global(internalmsg.ratelimit.interval="1")
+global(internalmsg.ratelimit.burst="4")
+
 # Defaults for omfile module
 module(load="builtin:omfile"
         Template="SystemdUnitTemplateFile"
