@@ -1,3 +1,10 @@
+vyatta-syslog (1.19) unstable; urgency=medium
+
+  [ Mike Manning ]
+  * Revert "Specify StateFile for imjournal module"
+
+ -- Charles (Chas) Williams <ciwillia@vyatta.att-mail.com>  Fri, 07 May 2021 10:14:02 -0400
+
 vyatta-syslog (1.18) unstable; urgency=medium
 
   * syslog: console should use omfile
