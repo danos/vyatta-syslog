@@ -1,3 +1,13 @@
+vyatta-syslog (1.20) unstable; urgency=medium
+
+  [ Paul Carson ]
+  * Remove obsolete code (Fixes: VRVDR-54890)
+
+  [ Mike Manning ]
+  * Reduce the number of 'network is unreachable' errors in the journal
+
+ -- Charles (Chas) Williams <ciwillia@vyatta.att-mail.com>  Mon, 10 May 2021 15:29:10 -0400
+
 vyatta-syslog (1.19) unstable; urgency=medium
 
   [ Mike Manning ]
