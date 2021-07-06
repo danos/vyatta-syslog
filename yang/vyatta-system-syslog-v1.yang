@@ -23,7 +23,7 @@ module vyatta-system-syslog-v1 {
 		 Web: www.att.com";
 
 	description
-		"Copyright (c) 2018-2020 AT&T Intellectual Property
+		"Copyright (c) 2018-2021 AT&T Intellectual Property
 		 All rights reserved.
 
 		 Copyright (c) 2014-2016 by Brocade Communications Systems, Inc.
@@ -60,6 +60,9 @@ module vyatta-system-syslog-v1 {
 
 		 Syslog configuration";
 
+	revision 2021-07-06 {
+		description "Add ipv6-address to the remote host";
+	}
 	revision 2020-09-09 {
 		description "Correct ancillary text for paths to certificate and key files";
 	}
@@ -120,6 +123,7 @@ module vyatta-system-syslog-v1 {
 			type types:hostname-port;
 			type types:ipv4-addr-port;
 			type types:ipv6-addr-port;
+			type types:ipv6-address;
 		}
 	}
 

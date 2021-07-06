@@ -459,8 +459,8 @@ sub build_tls_certificates {
     };
 
     my $encrypt_params = $syslog->{tls};
-    if ( defined( $encrypt_params ) ) {
-        my $ca_params = $encrypt_params->{'certificate-authority'};
+    if ( defined($encrypt_params) ) {
+        my $ca_params   = $encrypt_params->{'certificate-authority'};
         my $cert_params = $encrypt_params->{'local-certificate'};
         if ( !defined($ca_params) || !defined($cert_params) ) {
             print "Error: TLS configured without proper Certificates.\n";
@@ -484,7 +484,8 @@ sub build_journal_input_rate_limit {
     my ($config) = @_;
     my $out = "";
 
-    get_rate_limit_parms($config->{'system'}->{'syslog-enhanced'}->{'input'}->{'journal'});
+    get_rate_limit_parms(
+        $config->{'system'}->{'syslog-enhanced'}->{'input'}->{'journal'} );
 
     open my $fh, '>>', \$out;
     print_rate_limit_settings($fh);
@@ -597,7 +598,7 @@ END
         my $usertarget = "";
 
         if ( $user eq '*' ) {
-            $usertarget = <<"END"
+            $usertarget = <<"END";
 
 set \$.send.allusers = 1;
 
@@ -609,7 +610,7 @@ ruleset(name="allusersaction") {
 }
 END
         } else {
-            $usertarget = <<"END"
+            $usertarget = <<"END";
 
 set \$.send.user.${user} = 1;
 
@@ -1054,9 +1055,12 @@ sub get_target_port {
 
     my $target = $host;
     my $port   = $SYSLOG_PORT;
+    my @hostandport;
 
-    # Target examples: 1.1.1.1, 1.1.1.1:514, [1::1], [1::1]:514
-    my @hostandport = split( /:([^:\]]+)$/, $target );
+    # Target examples: 1.1.1.1, 1.1.1.1:514, [1::1], [1::1]:514, 1::1
+    if ( !Net::IP::ip_is_ipv6($target) ) {
+        @hostandport = split( /:([^:\]]+)$/, $target );
+    }
     if ( defined( $hostandport[1] ) ) {
         $target = $hostandport[0];
         $port   = $hostandport[1];
@@ -1452,9 +1456,9 @@ sub update_rsyslog_config {
       $econfig->{'system'}->{'static-host-mapping'}->{'host-name'};
     $econfig->{'static_hosts'} = $static_hosts if defined $static_hosts;
 
-    my $certs = build_tls_certificates($econfig);
-    my $files = build_targets($econfig);
-    my $rls   = build_rules($econfig);
+    my $certs              = build_tls_certificates($econfig);
+    my $files              = build_targets($econfig);
+    my $rls                = build_rules($econfig);
     my $journal_rate_limit = build_journal_input_rate_limit($econfig);
 
     push @actions, $journal_rate_limit;
