@@ -1,3 +1,10 @@
+vyatta-syslog (1.21) unstable; urgency=medium
+
+  [ kalaivani vinothkumar ]
+  * Syslog config setting for ipv6
+
+ -- Mike Manning <mmanning@vyatta.att-mail.com>  Tue, 13 Jul 2021 18:10:20 +0100
+
 vyatta-syslog (1.20) unstable; urgency=medium
 
   [ Paul Carson ]
