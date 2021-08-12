@@ -18,6 +18,7 @@ sysconf_DATA =
 sbin_SCRIPTS = scripts/system/vyatta_update_syslog.pl
 sbin_SCRIPTS += scripts/system/vyatta_syslog_gencerts
 sbin_SCRIPTS += scripts/system/vyatta_update_logrotate.pl
+sbin_SCRIPTS += scripts/system/vyatta_syslog_event_scripts
 
 share_perl5_DATA = lib/Vyatta/Syslog.pm
 
@@ -25,6 +26,9 @@ cronhourlydir = /etc/cron.hourly
 cronhourly_SCRIPTS = sysconf/vyatta-logrotate-hourly
 
 vyatta_config_scriptsdir = /opt/vyatta/etc/config/scripts
+
+vyatta_preconfigddir = /opt/vyatta/preconfig.d
+vyatta_preconfigd_SCRIPTS = preconfig.d/5000-event-script-permissions
 
 cpiop = find  . ! -regex '\(.*~\|.*\.bak\|.*\.swp\|.*\#.*\#\)' -print0 | \
   cpio -0pd

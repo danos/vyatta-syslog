@@ -75,6 +75,25 @@ template(name="WallIndicatorTemplate" type="list"  option.casesensitive="on") {
         constant(value="\n\r")
 }
 
+module(load="omprog")
+
+set $!event.identifier = "";
+set $!event.handler = "";
+# Provide JSON formatted event information to event handler
+template(name="EventHandlerJSON" type="list" option.jsonf="on") {
+        property(outname="timestamp" name="timereported" dateFormat="rfc3339" format="jsonf")
+        property(outname="host" name="hostname" format="jsonf")
+        property(outname="severity" name="!severity" format="jsonf" datatype="number")
+        property(outname="facility" name="!facility" format="jsonf" datatype="number")
+        property(outname="syslog-tag" name="syslogtag" format="jsonf")
+        property(outname="source" name="app-name" format="jsonf")
+        property(outname="message" name="msg" format="jsonf")
+        property(outname="event-handler" name="!event.handler" format="jsonf")
+        property(outname="arguments" name="!event.arguments" format="jsonf")
+        property(outname="user" name="!event.user" format="jsonf")
+        property(outname="logerrors" name="!event.logerrors" format="jsonf" datatype="bool")
+        property(outname="logoutput" name="!event.logoutput" format="jsonf" datatype="bool")
+}
 ###########################
 #### GLOBAL DIRECTIVES ####
 ###########################

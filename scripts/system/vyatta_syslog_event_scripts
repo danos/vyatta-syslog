@@ -1,0 +1,123 @@
+#!/usr/bin/perl
+# Copyright (c) 2021, AT&T Intellectual Property. All rights reserved.
+#
+# SPDX-License-Identifier: GPL-2.0-only
+
+use strict;
+use warnings;
+
+use Getopt::Long;
+use File::Spec::Functions;
+use File::Copy;
+use File::Basename;
+use File::Path qw (make_path);
+use File::stat;
+
+my $script_location = '/config/scripts/vyatta-syslog-events';
+
+sub add_event_script {
+    my ( $file, $location ) = @_;
+
+    if ( !defined $location ) {
+        return 0;
+    }
+
+    if ( !defined $file ) {
+        $file = basename($location);
+    }
+
+    if ( !-d $script_location ) {
+        make_path(
+            $script_location,
+            {
+                chmod => oct("0770"),
+            }
+        );
+    }
+
+    my $filepath = catfile( $script_location, $file );
+
+    my $dir = dirname($filepath);
+
+    die "Adding to $file is not permitted\n"
+      unless ( $dir eq $script_location );
+
+    my $found = 0;
+    if ( -e $location ) {
+        $found = 1;
+        my $rc = copy( $location, $filepath );
+        die "$location: $!\n" if ( $rc == 0 );
+        chmod 0770, $filepath;
+    }
+    if ( not $found ) {
+        die "File $location does not exist.\n";
+    }
+    else {
+        return 0;
+    }
+}
+
+sub delete_event_script {
+    my ( $file, $location ) = @_;
+
+    my $found    = 0;
+    my $filepath = catfile( $script_location, $file );
+    my $dir      = dirname($filepath);
+    die "Cannot delete event script $file.\n"
+      unless ( $dir eq $script_location );
+
+    if ( -e $filepath ) {
+        unlink($filepath) || die "Delete of event script $file failed.\n";
+        $found = 1;
+    }
+    if ( not $found ) {
+        die "Event script $file does not exist.\n";
+    }
+    else {
+        return 0;
+    }
+}
+
+sub list_event_scripts {
+    if ( !-d $script_location ) {
+        print "\n";
+        return 0;
+    }
+
+    opendir( my $dh, $script_location ) || return 0;
+
+    while ( readdir $dh ) {
+        if ( $_ eq "." || $_ eq ".." ) {
+            next;
+        }
+        print "$_\n";
+    }
+
+    return 0;
+}
+
+sub usage {
+    print "Usage: $0 --action=<add|delete|listscripts> ",
+      "[--script_name=<script-name>] ",
+      "[--location=<location>]\n";
+    exit 1;
+}
+
+my ( $action, $scriptname, $location );
+GetOptions(
+    "action=s"      => \$action,
+    "script_name=s" => \$scriptname,
+    "location=s"    => \$location,
+) or usage();
+
+my %actions = (
+    add         => \&add_event_script,
+    delete      => \&delete_event_script,
+    listscripts => \&list_event_scripts,
+);
+
+usage() unless ( defined($action) && defined( $actions{$action} ) );
+
+my $rc = $actions{$action}->( $scriptname, $location );
+
+exit $rc;

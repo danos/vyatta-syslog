@@ -1,0 +1,15 @@
+#!/bin/bash
+#
+# Copyright (c) 2021, AT&T Intellectual Property. All rights reserved.
+#
+# SPDX-License-Identifier: GPL-2.0-only
+#
+
+fix_syslog_events_permissions ()
+{
+    chmod -R 770 /config/scripts/vyatta-syslog-events &> /dev/null
+    chown -R root /config/scripts/vyatta-syslog-events &> /dev/null
+}
+
+fix_syslog_events_permissions
+

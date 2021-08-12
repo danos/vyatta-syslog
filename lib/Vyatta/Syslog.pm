@@ -388,6 +388,23 @@ sub build_actions {
     push @outactions, "call consoleaction"
       if ( exists( $actions->{'console'} ) );
 
+    if ( exists( $actions->{'event'} ) ) {
+        my $event = $actions->{'event'};
+        if ( exists( $event->{'arguments'} ) ) {
+            push @outactions,
+              "set \$!event.arguments = \"$event->{'arguments'}\";";
+        }
+        else {
+            push @outactions, "set \$!event.arguments = \"\";";
+        }
+        if ( exists( $event->{'handler'} ) ) {
+            push @outactions, "call eventaction_$event->{'handler'}";
+        }
+        if ( exists( $event->{'user'} ) ) {
+            push @outactions, "set \$!event.user = \"$event->{'user'}\";";
+        }
+    }
+
     push @outactions, "stop" if ( exists( $actions->{'discard'} ) );
 
     $out = join "\n", @outactions;
@@ -514,11 +531,13 @@ sub build_targets {
     my ($config) = @_;
     my $out      = "";
     my %users    = ();
+    my $eventsseen = 0;
 
     my $sys    = get_node( $config, 'system' );
     my $syslog = get_node( $sys,    'syslog-enhanced' );
     my $files  = $syslog->{'file'};
     my $hosts  = $syslog->{'host'};
+    my $events = $syslog->{'event-handler'};
 
     my @targets = ();
 
@@ -570,6 +589,37 @@ END
         push @targets, $hosttarget;
     }
 
+    foreach my $event ( @{$events} ) {
+        my $eventuser = "";
+        $eventuser = $event->{'user'} if $event->{'user'};
+        my $eventscript   = $event->{'call-script'};
+        my $eventname     = $event->{'event-name'};
+        my $eventinterval = $event->{'rate-limit'}->{'interval'};
+        my $logerrors     = $event->{'log'}->{'errors'};
+        my $logoutput     = $event->{'log'}->{'output'};
+        my $eventburst    = 1;
+
+        my $eventtarget = "";
+        $eventtarget = <<"END";
+
+ruleset(name="eventaction_${eventname}") {
+if ((\$.tnow - \$/tstart${eventname}) >= ${eventinterval}) then {
+    set \$/tstart${eventname} = \$.tnow;
+    set \$/burstcount${eventname} = 0;
+}
+if (\$/burstcount${eventname} < ${eventburst} ) then {
+    set \$/burstcount${eventname} = \$/burstcount${eventname} + 1;
+    set \$!event.user = "$eventuser";
+    set \$!event.handler = "$eventscript";
+    set \$!event.logerrors = $logerrors;
+    set \$!event.logoutput = $logoutput;
+    call eventaction
+}
+}
+END
+        push @targets, $eventtarget;
+    }
+
     my $rules = $syslog->{'rule'};
     my $console;
     foreach my $rule ( @{$rules} ) {
@@ -582,6 +632,7 @@ END
             foreach my $usertarget ( @{$usr} ) {
                 $users{$usertarget} = $usertarget;
             }
+            $eventsseen = 1 if ( exists( $then->{'event'} ) );
         }
         my $otherwise = $rule->{'otherwise'};
         if ( defined($otherwise) ) {
@@ -591,6 +642,7 @@ END
             foreach my $usertarget ( @{$usr} ) {
                 $users{$usertarget} = $usertarget;
             }
+            $eventsseen = 1 if ( exists( $otherwise->{'event'} ) );
         }
     }
 
@@ -642,6 +694,18 @@ END
         push @targets, $consoletarget;
     }
 
+    if ($eventsseen) {
+        my $events = <<"END";
+
+ruleset(name="eventaction") {
+	action(type="omprog"
+		binary="/usr/bin/syslog_events"
+		template="EventHandlerJSON")
+}
+END
+
+        push @targets, $events;
+}
     $out = join "\n", @targets;
 
     return $out;

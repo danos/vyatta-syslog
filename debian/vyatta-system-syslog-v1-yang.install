@@ -1,3 +1,4 @@
 usr/share/configd/yang/vyatta-system-syslog-v1.yang
 usr/share/configd/yang/vyatta-op-show-syslog-v1.yang
 usr/share/configd/yang/vyatta-op-delete-syslog-file-v1.yang
+usr/share/configd/yang/vyatta-op-syslog-event-scripts-v1.yang
