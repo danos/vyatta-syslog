@@ -1,3 +1,10 @@
+vyatta-syslog (1.22) unstable; urgency=medium
+
+  [ Sharmila Podury ]
+  * Perl library licensing incorrect
+
+ -- Charles (Chas) Williams <ciwillia@vyatta.att-mail.com>  Tue, 31 Aug 2021 11:05:17 -0400
+
 vyatta-syslog (1.21) unstable; urgency=medium
 
   [ kalaivani vinothkumar ]
