@@ -1090,6 +1090,7 @@ sub get_action {
     my ( $TARGET, $PORT );
     my @fwd_actions;
     my ( $dev, $ADDRESS );
+    my ( $NAME );
 
    # Use SYSTEMD_UNIT with SYSLOG_INDENTIFIER so that full unit name is printed,
    # eg: sshd@blue.service
@@ -1100,6 +1101,7 @@ sub get_action {
         $PORT   = $host_cfg->{'port'};
         my $dev = get_src_intf($host_cfg);
         $ADDRESS = get_active_ip( $config, $dev, $TARGET, $host_cfg );
+        $NAME = $host_cfg->{'entry'};
     } else {
 
         # Extract TARGET & PORT from host string
@@ -1203,7 +1205,8 @@ sub get_action {
                 "ip-port"  => $c->{'ip-port'},
                 "target"   => $TARGET,
                 "template" => $template_str,
-                "tls"      => $tls_config
+                "tls"      => $tls_config,
+                "name"     => $NAME,
             };
         } elsif ( $c->{protocol} eq 'udp' ) {
             $act_config = {
@@ -1213,6 +1216,7 @@ sub get_action {
                 "ip-port"  => $c->{'ip-port'},
                 "target"   => $TARGET,
                 "template" => $template_str,
+                "name"     => $NAME,
             };
         } else {
             die(

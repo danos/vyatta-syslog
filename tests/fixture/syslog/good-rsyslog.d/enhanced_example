@@ -44,7 +44,7 @@ set $.send.host.myserver = 1;
 
 ruleset(name="hostaction_myserver") {
     if ($.send.host.myserver == 1) then {
-         action( Type="omfwd" Target="1.2.3.4" Protocol="udp" Port="1551" Template="SystemdUnitTemplate" )
+         action( Type="omfwd" Target="1.2.3.4" Protocol="udp" Port="1551" Template="SystemdUnitTemplate" action.resumeRetryCount="-1" queue.filename="host_myserver" queue.size="1000" queue.type="LinkedList" queue.saveOnShutdown="on" queue.maxDiskSpace="5242880" )
 
         set $.send.host.myserver = 0;
     }

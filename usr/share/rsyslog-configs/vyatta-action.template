@@ -49,6 +49,14 @@ action(
 	[% ELSE %]
 	Template="SystemdUnitTemplate"
 	[% END %]
+	[% IF action.item('name') %]
+		action.resumeRetryCount="-1"
+		queue.filename="host_[% action.item('name') %]"
+		queue.size="1000"
+		queue.type="LinkedList"
+		queue.saveOnShutdown="on"
+		queue.maxDiskSpace="5242880"
+	[% END %]
 [% END %]
 )
 [% END %]
