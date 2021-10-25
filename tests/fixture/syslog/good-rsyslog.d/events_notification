@@ -1,0 +1,69 @@
+set $.tnow = $$UPTIME;
+set $!severity = $syslogseverity;
+set $!facility = $syslogfacility;
+ruleset(name="setpri") {
+set $!priority = ($!facility * 8) + $!severity;
+}
+$imjournalRateLimitInterval 600
+$imjournalRateLimitBurst 20000
+
+ruleset(name="eventaction_bash-example") {
+if (($.tnow - $/tstartbash-example) >= 0) then {
+    set $/tstartbash-example = $.tnow;
+    set $/burstcountbash-example = 0;
+}
+if ($/burstcountbash-example < 1 ) then {
+    set $/burstcountbash-example = $/burstcountbash-example + 1;
+    set $!event.user = "vyatta";
+    set $!event.handler = "bash-test";
+    set $!event.logerrors = 1;
+    set $!event.logoutput = 1;
+    call eventaction
+}
+}
+
+
+ruleset(name="eventaction_python-example") {
+if (($.tnow - $/tstartpython-example) >= 0) then {
+    set $/tstartpython-example = $.tnow;
+    set $/burstcountpython-example = 0;
+}
+if ($/burstcountpython-example < 1 ) then {
+    set $/burstcountpython-example = $/burstcountpython-example + 1;
+    set $!event.user = "vyatta";
+    set $!event.handler = "python-test";
+    set $!event.logerrors = 1;
+    set $!event.logoutput = 1;
+    call eventaction
+}
+}
+
+
+ruleset(name="eventaction") {
+	action(type="omprog"
+		binary="/usr/bin/syslog_events"
+		template="EventHandlerJSON")
+}
+
+if (( re_match($msg, "(Link|admin) (up|down)") )) then {
+ set $.flag.interface-up-down = 1;
+} else {
+continue
+}
+
+
+if ((($.flag.interface-up-down == 1))) then {
+ set $!event.arguments = "Interface State Change";
+call eventaction_bash-example
+} else {
+continue
+}
+
+
+if ((($.flag.interface-up-down == 1))) then {
+ set $!event.arguments = "Test Python Args";
+call eventaction_python-example
+} else {
+continue
+}
+

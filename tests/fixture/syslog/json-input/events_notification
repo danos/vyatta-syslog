@@ -1,0 +1,87 @@
+{
+   "system" : {
+      "syslog-enhanced" : {
+         "rule" : [
+            {
+               "rule-number" : 10,
+               "match" : {
+                  "msg" : {
+                     "posix-match" : [
+                        {
+                           "regex" : "(Link|admin) (up|down)"
+                        }
+                     ]
+                  }
+               },
+               "then" : {
+                  "set-flag" : [
+                     "interface-up-down"
+                  ]
+               }
+            },
+            {
+               "then" : {
+                  "event" : {
+                     "arguments" : "Interface State Change",
+                     "handler" : "bash-example"
+                  }
+               },
+               "match" : {
+                  "with-flag" : [
+                     "interface-up-down"
+                  ]
+               },
+               "rule-number" : 20
+            },
+            {
+               "rule-number" : 40,
+               "match" : {
+                  "with-flag" : [
+                     "interface-up-down"
+                  ]
+               },
+               "then" : {
+                  "event" : {
+                     "arguments" : "Test Python Args",
+                     "handler" : "python-example"
+                  }
+               }
+            }
+         ],
+         "input" : {
+            "journal" : {
+               "rate-limit" : {
+                  "interval" : 600,
+                  "burst" : 20000
+               }
+            }
+         },
+         "event-handler" : [
+            {
+               "log" : {
+                  "errors" : true,
+                  "output" : true
+               },
+               "user" : "vyatta",
+               "rate-limit" : {
+                  "interval" : 0
+               },
+               "call-script" : "bash-test",
+               "event-name" : "bash-example"
+            },
+            {
+               "event-name" : "python-example",
+               "user" : "vyatta",
+               "rate-limit" : {
+                  "interval" : 0
+               },
+               "call-script" : "python-test",
+               "log" : {
+                  "errors" : true,
+                  "output" : true
+               }
+            }
+         ]
+      }
+   }
+}
