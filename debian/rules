@@ -2,25 +2,51 @@
 
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
+export DH_GOPKG := github.com/danos/vyatta-syslog
+export DH_GOLANG_INSTALL_ALL := 1
+
+GOBUILDDIR := _build
+
+# Uncomment to enable race detection
+# This should only be done for local test builds; tests run very slow
+# See https://golang.org/doc/articles/race_detector.html#Runtime_Overheads
+#GORACE=-race
+
+# If the cover tool is present, use it in tests
+GOCOVER=$(if $(shell go doc cmd/cover >/dev/null 2>&1 && echo true),-cover,)
+
+%:
+	# Build Go packages
+	dh $@ --buildsystem=golang --with=golang \
+	      --builddirectory=$(GOBUILDDIR) \
+		  --package golang-syslog
+
+	# Build all other packages
+	dh $@ --with autoreconf --with systemd --with=yang --with=config-package \
+	      --no-package golang-syslog
+
+override_dh_auto_build: vet
+	dh_auto_build
+
+# We do not vet vendor code
+vet:
+	 if go doc cmd/vet >/dev/null 2>&1; then \
+		go vet $$(find . -type f -name \*.go | xargs dirname | \
+            sort -u | grep -v "/vendor/"); \
+    fi
 
 override_dh_auto_configure:
 	dh_auto_configure -- --prefix=/opt/vyatta --sysconfdir=/opt/vyatta/etc
 
 # verbose output of unittest logs
 override_dh_auto_test:
-	dh_auto_test -- VERBOSE=1
+	dh_auto_test --package golang-syslog -- $(GORACE) $(GOCOVER)
+	dh_auto_test --no-package golang-syslog -- VERBOSE=1
 
-# *.yang files and related templates are distributed via debian install files
-override_dh_auto_install:
-	dh_auto_install --destdir=debian/vyatta-syslog
-	mkdir -p debian/tmp/usr/share
-	mv debian/vyatta-syslog/usr/share/configd debian/tmp/usr/share
 
 override_dh_install:
-	dh_install
-	mkdir -p debian/vyatta-system-syslog-v1-yang/lib/systemd/system/rsyslog.service.d
+	dh_install --package golang-syslog
+	dh_install --no-package golang-syslog && \
+	mkdir -p debian/vyatta-system-syslog-v1-yang/lib/systemd/system/rsyslog.service.d && \
 	install --mode=644 debian/vyatta-syslog-snmptrap.conf \
 		debian/vyatta-system-syslog-v1-yang/lib/systemd/system/rsyslog.service.d
-
-%:
-	dh $@ --with autoreconf --with systemd --with=yang --with=config-package

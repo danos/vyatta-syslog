@@ -7,7 +7,9 @@ Build-Depends:
  cpio,
  debhelper (>= 9.20160403~) | dh-autoreconf,
  debhelper (>= 9.20160709),
+ dh-golang,
  dh-yang,
+ golang-any,
  libarray-utils-perl,
  libfile-slurp-perl,
  libfile-temp-perl,
@@ -30,6 +32,7 @@ Standards-Version: 3.9.6
 Package: vyatta-system-syslog-v1-yang
 Architecture: all
 Depends:
+ golang-syslog,
  rsyslog-openssl (>= 8.1908.0),
  vyatta-cfg (>= 1.16),
  vyatta-service-snmp (>= 0.40),
@@ -110,3 +113,10 @@ Provides: libvyatta-syslog-perl, ${diverted-files}
 Description: Vyatta syslog integration
  Provides scripts and files necessary to configure syslog with the
  Vyatta configuration system.
+
+Package: golang-syslog
+Architecture: any
+Depends:
+ ${misc:Depends}
+Description: The golang-syslog package provides the syslog_events utility for
+ the related YANG package build in this repo.

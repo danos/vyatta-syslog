@@ -1,4 +1,12 @@
 etc/rsyslog.conf.vyatta
+opt/vyatta/preconfig.d
+opt/vyatta/sbin/vyatta_syslog_event_scripts
+opt/vyatta/sbin/vyatta_syslog_gencerts
+opt/vyatta/sbin/vyatta_update_logrotate.pl
+opt/vyatta/sbin/vyatta_update_syslog.pl
+opt/vyatta/share/perl5/Vyatta/Syslog.pm
+opt/vyatta/share/rsyslog-configs/vyatta-action.template
+opt/vyatta/share/tmplscripts/system/syslog/configd_end.sh
 scripts/netplug/deladdr.d/rsyslogd /etc/netplug/deladdr.d
 scripts/netplug/newaddr.d/rsyslogd /etc/netplug/newaddr.d
 scripts/netplug/linkup.d/rsyslogd /etc/netplug/linkup.d
