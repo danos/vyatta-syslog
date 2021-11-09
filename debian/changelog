@@ -1,3 +1,12 @@
+vyatta-syslog (1.24) unstable; urgency=medium
+
+  [ Paul Carson ]
+  * Syslog event notification support (Fixes: VRVDR-40888)
+  * Event handler unit test updates (Fixes: VRVDR-40888)
+  * Add utility to execute event scripts (Closes: VRVDR-40888)
+
+ -- Sharmila Podury <sharmila.podury@att.com>  Tue, 09 Nov 2021 10:15:58 -0800
+
 vyatta-syslog (1.23) unstable; urgency=medium
 
   [ Paul Carson ]
