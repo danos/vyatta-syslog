@@ -86,6 +86,39 @@ Depends:
 Description: vyatta-system-syslog-enhanced-routing-instance-v1 module
  VRF support for Enhanced Syslog.
 
+Package: vyatta-op-show-syslog-v1-yang
+Architecture: all
+Depends:
+ vyatta-syslog,
+ ${misc:Depends},
+ ${yang:Depends}
+Breaks: vyatta-system-syslog-v1-yang (<< 1.25)
+Replaces: vyatta-system-syslog-v1-yang (<< 1.25)
+Description: vyatta-op-show-syslog-v1 module
+ Show syslog log files.
+
+Package: vyatta-op-delete-syslog-file-v1-yang
+Architecture: all
+Depends:
+ vyatta-syslog,
+ ${misc:Depends},
+ ${yang:Depends}
+Breaks: vyatta-system-syslog-v1-yang (<< 1.25)
+Replaces: vyatta-system-syslog-v1-yang (<< 1.25)
+Description: vyatta-op-delete-syslog-file-v1 module
+ Delete syslog log files.
+
+Package: vyatta-op-syslog-event-scripts-v1-yang
+Architecture: all
+Depends:
+ vyatta-syslog,
+ ${misc:Depends},
+ ${yang:Depends}
+Breaks: vyatta-system-syslog-v1-yang (<< 1.25)
+Replaces: vyatta-system-syslog-v1-yang (<< 1.25)
+Description: vyatta-op-syslog-event-scripts-v1 module
+ Manage syslog event scripts for event notifications.
+
 Package: vyatta-syslog
 Architecture: any
 Depends:
