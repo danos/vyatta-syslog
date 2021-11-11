@@ -1,3 +1,9 @@
+vyatta-syslog (1.25) unstable; urgency=medium
+
+  * Refactor yang packaging (Fixes: VRVDR-56525)
+
+ -- Paul Carson <paul.carson@intl.att.com>  Thu, 11 Nov 2021 16:56:39 +0000
+
 vyatta-syslog (1.24) unstable; urgency=medium
 
   [ Paul Carson ]
